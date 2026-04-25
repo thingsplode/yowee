@@ -1,5 +1,55 @@
 # Yowee — Claude Context
 
+## TDD Workflow (mandatory for new features)
+
+Any feature implementation that adds new behavior must follow the red → green cycle using the `/tdd` skill. The TDD agent owns the acceptance criteria and test files. The main agent owns the implementation.
+
+### When to invoke `/tdd write <feature>`
+
+Invoke before writing any implementation code when:
+- Implementing a task marked `[ ]` in `spec/tasks.md`
+- Adding a new type, actor, or protocol to `YoweeCore`
+- Implementing a new Phase (Phase 3 Notepad or beyond)
+- Adding a new LLM provider client
+- Changing the `PipelineRunner` execution model or `TextReplacer` strategy
+
+Do **not** invoke for: bug fixes to existing behavior, refactors with no observable behavior change, config or tooling changes.
+
+### Mandatory workflow
+
+1. **Before implementation**: call `/tdd write <feature>`. Do not write a single line of feature code until the TDD agent reports the red phase is complete (failing tests + contract written).
+2. **During implementation**: implement only what is needed to make the contracted tests pass. Do not add untested behavior.
+3. **After implementation**: call `/tdd verify <feature>`. Do not report work as done until the TDD agent confirms all acceptance criteria pass.
+4. **If a test is in the way**: call `/tdd review` and present the proposed change. Do not modify a test file unilaterally. If the TDD agent rejects the change, fix the implementation instead.
+
+### Protected test files
+
+Any test file whose first line is `// TDD-CONTRACT: …` is owned by the TDD agent. The main agent must **never** edit such a file without an explicit `/tdd review` approval recorded in `.claude/tdd-contracts/`. Violating this rule invalidates the acceptance criteria for that feature.
+
+### Contract files
+
+The TDD agent writes contracts to `.claude/tdd-contracts/<feature-slug>.md`. Each contract lists:
+- Acceptance criteria (AC-xx) with spec traceability (FR-xx / NFR-xx)
+- Which test functions cover which criteria
+- Current status (`failing` → `passing` after `/tdd verify`)
+
+These contracts are the authoritative definition of "done" for each feature.
+
+---
+
+## Code Quality Skill
+
+After completing any significant change — a new feature, a refactor spanning multiple files, a new actor or protocol, new UI views, or changes to the pipeline engine — invoke `/swift-analyze` before reporting the work as done.
+
+Significant changes include (non-exhaustive):
+- Adding or removing a file in `Sources/`
+- Restructuring actor isolation or `@MainActor` boundaries
+- Changing a public API (protocol, initializer signature, published property)
+- Adding a new SwiftUI view or AppKit panel
+- Any change to `PipelineRunner`, `LLMClient`, or `TextReplacer`
+
+Small, targeted fixes (single-line typo, comment update, config tweak) do not require a lint pass.
+
 ## What This Project Is
 
 **Yowee** is a native macOS menu bar utility (⌥Space trigger) that reads selected text from any app via AXUIElement, runs it through a user-configured LLM pipeline, and replaces the selection with the result. Future phases: Phase 2 — voice transcription (Whisper), Phase 3 — Markdown notepad.
@@ -423,5 +473,6 @@ let client = AnthropicClient(apiKey: "k", session: MockURLProtocol.makeSession(j
 - Code-signed: Developer ID (not App Store). Notarized with `xcrun notarytool`.
 - Distributed as DMG + Homebrew cask.
 - Build: `./build_run.sh` — lint → unit tests → xcodebuild → assemble `.app` → ad-hoc sign → launch.
+- **GitLeaks pre-commit hook** (`brew install gitleaks`) blocks any commit containing a secret. Hook lives in `.githooks/pre-commit` (version-controlled). Activated via `git config core.hooksPath .githooks` — done automatically by `./build_run.sh`. API keys belong in the Keychain only; never in source files or config.
 - **Must re-sign after every rebuild** (`codesign --force --deep --sign -`) so TCC accessibility permission stays valid.
 - After each rebuild the app has a new ad-hoc identity. Keychain items saved with the old open-access ACL pattern are still readable; items saved without it (old builds) require the user to re-enter their API key once.

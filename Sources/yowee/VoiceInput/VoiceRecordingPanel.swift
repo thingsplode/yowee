@@ -114,8 +114,8 @@ final class VoiceRecordingPanel {
     private func handleKeyEvent(_ event: NSEvent) -> NSEvent? {
         let flags = event.modifierFlags.intersection([.command, .option, .shift, .control])
 
-        // ⌥Esc → cancel (works in all active states whenever the app has key focus)
-        if event.keyCode == 53 /* Escape */ && flags == .option {
+        // Esc or ⌥Esc → cancel (works in all active states whenever the app has key focus)
+        if event.keyCode == 53 /* Escape */ && (flags.isEmpty || flags == .option) {
             // Defer past the current event-dispatch cycle so that window activation
             // in cancel() fires after the system finishes processing this key event.
             Task { @MainActor [weak self] in self?.onCancel?() }

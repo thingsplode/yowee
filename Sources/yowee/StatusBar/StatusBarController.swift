@@ -1,5 +1,4 @@
 import Cocoa
-import SwiftUI
 import YoweeCore
 
 /// Bridges an AppKit menu item action (ObjC selector dispatch) to a Swift closure.
@@ -19,7 +18,7 @@ final class StatusBarController: NSObject {
     private var statusItem: NSStatusItem
     private let store: PipelineStore
     private let shortcuts: ShortcutStore
-    private var settingsWindowController: NSWindowController?
+    private var settingsWindowController: PreferencesWindowController?
     private var configProxy: MenuItemProxy?
 
     deinit {
@@ -93,23 +92,13 @@ final class StatusBarController: NSObject {
     @objc private func openSettings() {
         AppLogger.log("openSettings called, existing controller: \(settingsWindowController != nil)", category: "StatusBar")
         if settingsWindowController == nil {
-            let view = ConfigurationView()
-                .environment(store)
-                .environment(shortcuts)
-            let hostVC = NSHostingController(rootView: view)
-            let window = NSWindow(contentViewController: hostVC)
-            window.title = "yowee Settings"
-            window.styleMask = [.titled, .closable, .resizable, .miniaturizable]
-            window.setContentSize(NSSize(width: 680, height: 520))
-            window.center()
-            window.isReleasedWhenClosed = false
-            window.collectionBehavior = [.moveToActiveSpace]
-            settingsWindowController = NSWindowController(window: window)
+            let prefsController = PreferencesWindowController(store: store, shortcuts: shortcuts)
+            settingsWindowController = prefsController
             NotificationCenter.default.addObserver(
                 self,
                 selector: #selector(settingsWindowWillClose),
                 name: NSWindow.willCloseNotification,
-                object: window
+                object: prefsController.window
             )
             AppLogger.log("settings window created", category: "StatusBar")
         }

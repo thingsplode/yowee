@@ -27,6 +27,7 @@ S_BREW="skip";      D_BREW="skipped"
 S_SWIFTLINT="skip"; D_SWIFTLINT="skipped"
 S_SWIFTFMT="skip";  D_SWIFTFMT="skipped"
 S_PERIPHERY="skip"; D_PERIPHERY="skipped"
+S_GITLEAKS="skip";  D_GITLEAKS="skipped"
 S_OLLAMA="skip";    D_OLLAMA="skipped"
 # Analysis
 S_LINT="skip";      D_LINT="skipped"
@@ -170,7 +171,7 @@ run_xcodebuild() {
     return $exit_code
 }
 
-# ── Preflight: Xcode plugin health ───────────────────────────────────────────
+# ── Preflight: Xcode plugin health + git hooks ────────────────────────────────
 step "Preflight"
 if DEVELOPER_DIR=$DEVELOPER_DIR xcodebuild -version 2>&1 | grep -q "runFirstLaunch"; then
     warn "Xcode plugins are out of sync."
@@ -178,6 +179,14 @@ if DEVELOPER_DIR=$DEVELOPER_DIR xcodebuild -version 2>&1 | grep -q "runFirstLaun
     [[ "${reply:-Y}" =~ ^[Yy]$ ]] && sudo xcodebuild -runFirstLaunch
 fi
 echo "  Xcode: $(DEVELOPER_DIR=$DEVELOPER_DIR xcodebuild -version 2>/dev/null | head -1)"
+
+# Ensure the repo uses .githooks/ so the GitLeaks pre-commit hook is active.
+if [[ "$(git -C "$REPO" config core.hooksPath 2>/dev/null)" != ".githooks" ]]; then
+    git -C "$REPO" config core.hooksPath .githooks
+    echo "  Configured git hooks path → .githooks"
+else
+    echo "  Git hooks path: .githooks ✓"
+fi
 
 # ── Dependencies & services ───────────────────────────────────────────────────
 step "Dependencies & services"
@@ -193,6 +202,9 @@ S_SWIFTFMT=$LAST_STATUS; D_SWIFTFMT=$LAST_DETAIL
 
 check_dep "Periphery" "periphery version" "peripheryapp/periphery/periphery"
 S_PERIPHERY=$LAST_STATUS; D_PERIPHERY=$LAST_DETAIL
+
+check_dep "GitLeaks" "gitleaks version" "gitleaks"
+S_GITLEAKS=$LAST_STATUS; D_GITLEAKS=$LAST_DETAIL
 
 check_service "Ollama" \
     "command -v ollama" \
@@ -393,6 +405,7 @@ row "Homebrew"       $S_BREW      "$D_BREW"
 row "SwiftLint"      $S_SWIFTLINT "$D_SWIFTLINT"
 row "SwiftFormat"    $S_SWIFTFMT  "$D_SWIFTFMT"
 row "Periphery"      $S_PERIPHERY "$D_PERIPHERY"
+row "GitLeaks"       $S_GITLEAKS  "$D_GITLEAKS"
 row "Ollama"         $S_OLLAMA    "$D_OLLAMA"
 
 echo ""

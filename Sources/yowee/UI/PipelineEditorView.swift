@@ -64,7 +64,7 @@ struct PipelineEditorView: View {
                 }
                 .listStyle(.inset)
             }
-            .frame(minWidth: 180, maxWidth: 220)
+            .frame(minWidth: 120, maxWidth: 220)
 
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -94,9 +94,9 @@ struct PipelineEditorView: View {
                 Spacer()
             }
             .padding()
-            .frame(minWidth: 360)
+            .frame(minWidth: 200)
         }
-        .navigationTitle(pipeline.name)
+        .navigationTitle("")
     }
 
     private func addStep() {

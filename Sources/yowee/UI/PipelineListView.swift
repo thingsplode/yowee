@@ -4,7 +4,6 @@ struct PipelineListView: View {
     @Environment(PipelineStore.self) private var store
     @State private var selectedPipeline: Pipeline?
 
-    // Single sort definition lives in PipelineStore.sortedPipelines.
     private var pipelines: [Pipeline] { store.sortedPipelines }
 
     var body: some View {
@@ -56,6 +55,8 @@ struct PipelineListView: View {
                 .padding(.vertical, 6)
                 .help("Re-adds any default pipelines that have been deleted. Does not remove custom pipelines.")
             }
+            // Pin sidebar width so column-width recalculation on detail changes can't shift it.
+            .navigationSplitViewColumnWidth(min: 160, ideal: 200, max: 280)
         } detail: {
             if let pipeline = selectedPipeline {
                 PipelineEditorView(pipeline: pipeline)
