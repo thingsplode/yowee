@@ -1,5 +1,4 @@
 import AVFoundation
-import Carbon.HIToolbox
 import Cocoa
 import SwiftUI
 import YoweeCore
@@ -50,8 +49,7 @@ final class VoiceInputCoordinator: NSObject {
         GlobalShortcutManager.shared.onVoiceStart = { [weak self] in self?.beginRecording() }
         GlobalShortcutManager.shared.onVoiceStop = { [weak self] in self?.endRecording() }
 
-        let stopKey = HotKey(keyCode: UInt32(kVK_ANSI_S), modifiers: UInt32(optionKey))
-        GlobalShortcutManager.shared.registerVoice(start: shortcuts.voiceTrigger, stop: stopKey)
+        GlobalShortcutManager.shared.registerVoice(start: shortcuts.voiceTrigger, stop: shortcuts.voiceStopTrigger)
 
         NotificationCenter.default.addObserver(
             self,
@@ -65,6 +63,7 @@ final class VoiceInputCoordinator: NSObject {
 
     @objc private func shortcutsChanged() {
         GlobalShortcutManager.shared.updateVoiceStart(shortcuts.voiceTrigger)
+        GlobalShortcutManager.shared.updateVoiceStop(shortcuts.voiceStopTrigger)
     }
 
     // MARK: - Recording phase

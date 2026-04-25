@@ -8,8 +8,10 @@ struct HotKey: Codable, Equatable {
 
     /// ⌥Space — trigger text pipeline
     static let defaultYoweeTrigger = HotKey(keyCode: UInt32(kVK_Space), modifiers: UInt32(optionKey))
-    /// ⌥R — push-to-talk voice recording
+    /// ⌥R — push-to-talk voice recording start
     static let defaultVoiceTrigger = HotKey(keyCode: UInt32(kVK_ANSI_R), modifiers: UInt32(optionKey))
+    /// ⌥S — voice recording stop
+    static let defaultVoiceStopTrigger = HotKey(keyCode: UInt32(kVK_ANSI_S), modifiers: UInt32(optionKey))
 
     // MARK: - CGEvent modifier conversion
 

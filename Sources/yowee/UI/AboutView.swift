@@ -19,7 +19,7 @@ struct AboutView: View {
             Text("Version \(appVersion)")
                 .foregroundStyle(.secondary)
 
-            Text("© 2025 Csaba Tamas")
+            Text("© 2026 Csaba Tamas")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

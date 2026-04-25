@@ -257,7 +257,7 @@ if [[ $S_STAPLE == "pass" ]]; then
     fi
 
     SPCTL_LOG=$(mktmp)
-    if spctl --assess --type execute --verbose "$APP" > "$SPCTL_LOG" 2>&1; then
+    if spctl --assess --type open --context context:primary-signature --verbose "$APP" > "$SPCTL_LOG" 2>&1; then
         echo "  ✓ spctl assess"
         cat "$SPCTL_LOG"
     else

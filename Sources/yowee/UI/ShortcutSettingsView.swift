@@ -7,8 +7,10 @@ struct ShortcutSettingsView: View {
 
     @State private var yoweeKey: HotKey = .defaultYoweeTrigger
     @State private var voiceKey: HotKey = .defaultVoiceTrigger
+    @State private var voiceStopKey: HotKey = .defaultVoiceStopTrigger
     @State private var yoweeRecording = false
     @State private var voiceRecording = false
+    @State private var voiceStopRecording = false
 
     var body: some View {
         Form {
@@ -31,7 +33,7 @@ struct ShortcutSettingsView: View {
 
             Section {
                 HStack {
-                    Text("Voice Recording")
+                    Text("Start Recording")
                     Spacer()
                     ShortcutRecorderButton(hotKey: $voiceKey, isRecording: $voiceRecording)
                 }
@@ -39,7 +41,16 @@ struct ShortcutSettingsView: View {
                     voiceKey = .defaultVoiceTrigger
                 }
                 .foregroundStyle(.secondary)
-                Text("Hold this shortcut to record voice. Release to stop recording and begin transcription.")
+                HStack {
+                    Text("Stop Recording")
+                    Spacer()
+                    ShortcutRecorderButton(hotKey: $voiceStopKey, isRecording: $voiceStopRecording)
+                }
+                Button("Reset to ⌥S") {
+                    voiceStopKey = .defaultVoiceStopTrigger
+                }
+                .foregroundStyle(.secondary)
+                Text("Press the start shortcut to begin recording voice. Press the stop shortcut to finish and begin transcription.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -49,6 +60,7 @@ struct ShortcutSettingsView: View {
         .onAppear {
             yoweeKey = store.yoweeTrigger
             voiceKey = store.voiceTrigger
+            voiceStopKey = store.voiceStopTrigger
         }
         .onChange(of: yoweeKey) { _, newValue in
             store.yoweeTrigger = newValue
@@ -57,6 +69,11 @@ struct ShortcutSettingsView: View {
         }
         .onChange(of: voiceKey) { _, newValue in
             store.voiceTrigger = newValue
+            store.save()
+            // ShortcutStore.save() posts .yoweeShortcutsChanged — VoiceInputCoordinator handles it.
+        }
+        .onChange(of: voiceStopKey) { _, newValue in
+            store.voiceStopTrigger = newValue
             store.save()
             // ShortcutStore.save() posts .yoweeShortcutsChanged — VoiceInputCoordinator handles it.
         }

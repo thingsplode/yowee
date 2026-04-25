@@ -50,6 +50,11 @@ final class GlobalShortcutManager {
         registerHotKey(hotKey, id: 2)
     }
 
+    func updateVoiceStop(_ hotKey: HotKey) {
+        unregisterHotKey(id: 3)
+        registerHotKey(hotKey, id: 3)
+    }
+
     // MARK: - Private
 
     private func installEventHandlerIfNeeded() {

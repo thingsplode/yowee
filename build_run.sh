@@ -379,8 +379,16 @@ if [[ $S_BUILD == "pass" ]]; then
     mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
     cp "$BINARY" "$APP/Contents/MacOS/yowee"
     cp "$REPO/Info.plist" "$APP/Contents/Info.plist"
+    cp "$REPO/Sources/yowee/Assets.xcassets/AppIcon.appiconset/mike.icns" \
+       "$APP/Contents/Resources/mike.icns"
     codesign --force --deep --sign - "$APP"
     echo "  Signed: $APP"
+    # Re-register with Launch Services so the Privacy & Security Accessibility pane
+    # picks up the current icon. Without this, LS may serve a cached (icon-less) entry
+    # from a stale build copy and the generic icon appears in System Settings.
+    LSREG="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
+    "$LSREG" -f "$APP"
+    echo "  Registered with Launch Services"
 fi
 
 # ── Launch ────────────────────────────────────────────────────────────────────

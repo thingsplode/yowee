@@ -350,24 +350,43 @@ The hotkey is registered with Carbon's `RegisterEventHotKey`. This API does **no
 
 ---
 
-## Distribution (T-28, not yet done)
-
-The planned distribution path is a notarized DMG:
+## Installation
 
 ```bash
-# Archive
-xcodebuild archive -scheme yowee -archivePath build/Yowee.xcarchive
-
-# Export
-xcodebuild -exportArchive -archivePath build/Yowee.xcarchive \
-    -exportPath build/ -exportOptionsPlist ExportOptions.plist
-
-# Notarize
-xcrun notarytool submit build/yowee.app.zip \
-    --apple-id <email> --team-id <teamID> --password <app-specific-password>
-
-# Staple
-xcrun stapler staple build/yowee.app
+brew tap thingsplode/yowee
+brew install --cask yowee
 ```
 
-The app must be code-signed with a **Developer ID Application** certificate (not App Store). The app requires the Accessibility entitlement be listed in the entitlements file and the codesigning must not sandbox the process, as `AXUIElement` is incompatible with the App Store sandbox.
+Grant Accessibility permission on first launch (System Settings → Privacy & Security → Accessibility).
+
+---
+
+## Distribution
+
+Releases are built, notarized, and published using two scripts:
+
+| Script | Purpose |
+|---|---|
+| `notarizer.sh` | Builds a Release binary, assembles the `.app`, signs with Developer ID, notarizes with Apple, and staples the ticket |
+| `publisher.sh` | Wraps the stapled app in a DMG, publishes a GitHub Release, and updates the Homebrew tap formula |
+
+### Release workflow
+
+```bash
+# 1. Set notarization credentials
+export NOTARIZE_TEAM_ID="XXXXXXXXXX"
+export NOTARIZE_APPLE_ID="you@example.com"
+export NOTARIZE_PASSWORD="xxxx-xxxx-xxxx-xxxx"
+
+# 2. Build, sign, notarize, and staple
+./notarizer.sh
+
+# 3. Package as DMG, publish GitHub Release, update tap
+./publisher.sh
+```
+
+`publisher.sh` checks for required tools (`create-dmg`, `gh`) at startup and offers to install them via Homebrew if they are missing.
+
+### Code signing
+
+The app must be signed with a **Developer ID Application** certificate (not App Store). It is distributed as a notarized DMG. The App Store sandbox is incompatible with `AXUIElement` — the app is intentionally non-sandboxed.
