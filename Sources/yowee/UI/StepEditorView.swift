@@ -110,22 +110,12 @@ struct StepEditorView: View {
     }
 
     private func fetchModelsIfNeeded() async {
-        switch step.provider {
-        case .openai:
-            guard let apiKey = KeychainStore.load(for: LLMProvider.openai.keychainKey),
-                  !apiKey.isEmpty else {
-                fetchedModels = []
-                return
-            }
-            isFetchingModels = true
-            defer { isFetchingModels = false }
-            fetchedModels = (try? await OpenAIClient(apiKey: apiKey).fetchModels()) ?? []
-        case .ollama:
-            isFetchingModels = true
-            defer { isFetchingModels = false }
-            fetchedModels = (try? await OllamaClient().fetchModels()) ?? []
-        default:
+        guard step.provider == .openai || step.provider == .ollama else {
             fetchedModels = []
+            return
         }
+        isFetchingModels = true
+        defer { isFetchingModels = false }
+        fetchedModels = (try? await ModelFetcherService.shared.fetchModels(for: step.provider)) ?? []
     }
 }

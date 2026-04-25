@@ -30,7 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         voiceCoordinator = VoiceInputCoordinator(store: store, shortcuts: shortcuts)
         voiceCoordinator?.setup()
 
-        GlobalShortcutManager.shared.register(with: shortcuts.yoweeTrigger)
+        GlobalShortcutManager.shared.registerYoweeTrigger(shortcuts.yoweeTrigger)
         AccessibilityPermissionGuard.checkAndPromptIfNeeded()
         warmUpKeychain()
     }

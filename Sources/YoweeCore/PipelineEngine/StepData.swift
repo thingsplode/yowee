@@ -7,19 +7,21 @@ public struct StepData: Sendable {
     public let userTemplate: String
     public let provider: LLMProvider
     public let modelID: String
-    public let ollamaThinkingDisabled: Bool
+    /// Provider-specific boolean flags (e.g. ["thinkingDisabled": true] for Ollama).
+    /// Using a dictionary avoids changing the struct signature for every new provider option.
+    public let providerOptions: [String: Bool]
 
     public init(
         systemPrompt: String?,
         userTemplate: String,
         provider: LLMProvider,
         modelID: String,
-        ollamaThinkingDisabled: Bool = false
+        providerOptions: [String: Bool] = [:]
     ) {
         self.systemPrompt = systemPrompt
         self.userTemplate = userTemplate
         self.provider = provider
         self.modelID = modelID
-        self.ollamaThinkingDisabled = ollamaThinkingDisabled
+        self.providerOptions = providerOptions
     }
 }

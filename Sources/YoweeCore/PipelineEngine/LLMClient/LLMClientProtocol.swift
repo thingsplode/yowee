@@ -23,4 +23,13 @@ public enum LLMError: Error, LocalizedError {
         case .timeout: "Request timed out after 30 seconds"
         }
     }
+
+    /// True for errors that are likely transient and safe to retry.
+    public var isTransient: Bool {
+        switch self {
+        case .apiError(let code, _): code == 429 || code >= 500
+        case .timeout: true
+        default: false
+        }
+    }
 }

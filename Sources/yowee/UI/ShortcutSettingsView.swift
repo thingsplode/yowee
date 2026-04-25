@@ -54,7 +54,7 @@ struct ShortcutSettingsView: View {
         .onChange(of: yoweeKey) { _, newValue in
             store.yoweeTrigger = newValue
             store.save()
-            GlobalShortcutManager.shared.updateHotKey(newValue)
+            GlobalShortcutManager.shared.updateYoweeTrigger(newValue)
         }
         .onChange(of: voiceKey) { _, newValue in
             store.voiceTrigger = newValue

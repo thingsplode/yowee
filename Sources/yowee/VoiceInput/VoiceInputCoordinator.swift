@@ -11,7 +11,8 @@ final class VoiceInputCoordinator: NSObject {
     private let store: PipelineStore
     private let shortcuts: ShortcutStore
     private let runner = PipelineRunner()
-    private let recorder = AudioRecorder()
+    private let recorder: any AudioRecording
+    private let transcriber: any TranscriptionService
     private let panel = VoiceRecordingPanel()
 
     private let sessionState = VoiceSessionState()
@@ -26,6 +27,21 @@ final class VoiceInputCoordinator: NSObject {
     init(store: PipelineStore, shortcuts: ShortcutStore) {
         self.store = store
         self.shortcuts = shortcuts
+        self.recorder = AudioRecorder()
+        self.transcriber = WhisperTranscriptionService.shared
+    }
+
+    /// Designated initialiser for tests — inject mock recorder and transcriber.
+    init(
+        store: PipelineStore,
+        shortcuts: ShortcutStore,
+        recorder: any AudioRecording,
+        transcriber: any TranscriptionService
+    ) {
+        self.store = store
+        self.shortcuts = shortcuts
+        self.recorder = recorder
+        self.transcriber = transcriber
     }
 
     // MARK: - Lifecycle
@@ -44,7 +60,7 @@ final class VoiceInputCoordinator: NSObject {
             object: nil
         )
 
-        Task { await WhisperTranscriber.shared.warmUp() }
+        transcriber.warmUp()
     }
 
     @objc private func shortcutsChanged() {
@@ -140,19 +156,19 @@ final class VoiceInputCoordinator: NSObject {
     // MARK: - Transcription phase
 
     private func beginTranscription(audioURL: URL) {
-        let dp = WhisperTranscriber.shared.downloadProgress
+        let dp = transcriber.modelDownloadProgress
         sessionState.voiceState = dp != nil ? .modelLoading : .transcribing
         sessionState.loadingProgress = dp
         log("beginTranscription: initial state=\(sessionState.voiceState)")
         panel.reflow()
 
         transcriptionTask = Task {
-            // Poll WhisperTranscriber.downloadProgress at 10 Hz and keep the voice state
+            // Poll transcriber.modelDownloadProgress at 10 Hz and keep the voice state
             // and progress bar in sync while the model downloads / loads into memory.
             let poller = Task { [weak self] in
                 guard let self else { return }
                 while !Task.isCancelled {
-                    let dp = WhisperTranscriber.shared.downloadProgress
+                    let dp = transcriber.modelDownloadProgress
                     if let dp {
                         if case .transcribing = sessionState.voiceState {
                             sessionState.voiceState = .modelLoading
@@ -172,7 +188,7 @@ final class VoiceInputCoordinator: NSObject {
 
             do {
                 log("beginTranscription: calling transcribe()")
-                let text = try await WhisperTranscriber.shared.transcribe(audioURL: audioURL)
+                let text = try await transcriber.transcribe(audioURL: audioURL)
                 poller.cancel()
                 sessionState.loadingProgress = nil
                 log("beginTranscription: transcribed \(text.count) chars: \"\(text.prefix(80))\"")

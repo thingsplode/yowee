@@ -21,7 +21,7 @@ final class LoadingHUD {
         p.hasShadow = true
         p.level = .popUpMenu
         p.ignoresMouseEvents = true
-        p.setFrameOrigin(NSPoint(x: point.x - 70, y: point.y - 50))
+        p.positionNear(point, width: 140, height: 36)
         p.orderFrontRegardless()
         self.panel = p
     }

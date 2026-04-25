@@ -3,20 +3,20 @@ import Testing
 
 struct LLMClientFactoryTests {
     @Test func anthropicProviderReturnsAnthropicClient() {
-        #expect(LLMClientFactory.client(for: step(.anthropic)) is AnthropicClient)
+        #expect(LLMClientFactory.client(for: step(.anthropic), credentials: .empty) is AnthropicClient)
     }
 
     @Test func openAIProviderReturnsOpenAIClient() {
-        #expect(LLMClientFactory.client(for: step(.openai)) is OpenAIClient)
+        #expect(LLMClientFactory.client(for: step(.openai), credentials: .empty) is OpenAIClient)
     }
 
     @Test func ollamaProviderReturnsOllamaClient() {
-        #expect(LLMClientFactory.client(for: step(.ollama)) is OllamaClient)
+        #expect(LLMClientFactory.client(for: step(.ollama), credentials: .empty) is OllamaClient)
     }
 
     @Test func allProvidersAreHandled() {
         for provider in LLMProvider.allCases {
-            _ = LLMClientFactory.client(for: step(provider))
+            _ = LLMClientFactory.client(for: step(provider), credentials: .empty)
         }
     }
 

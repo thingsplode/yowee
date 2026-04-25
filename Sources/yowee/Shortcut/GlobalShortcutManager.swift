@@ -25,13 +25,13 @@ final class GlobalShortcutManager {
 
     // MARK: - Text pipeline
 
-    func register(with hotKey: HotKey = .defaultYoweeTrigger) {
+    func registerYoweeTrigger(_ hotKey: HotKey = .defaultYoweeTrigger) {
         currentHotKey = hotKey
         installEventHandlerIfNeeded()
         registerHotKey(hotKey, id: 1)
     }
 
-    func updateHotKey(_ hotKey: HotKey) {
+    func updateYoweeTrigger(_ hotKey: HotKey) {
         currentHotKey = hotKey
         unregisterHotKey(id: 1)
         registerHotKey(hotKey, id: 1)

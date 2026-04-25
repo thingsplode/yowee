@@ -66,39 +66,27 @@ struct PipelineListView: View {
                     systemImage: "wand.and.sparkles",
                     description: Text("Choose a pipeline to edit, or create a new one.")
                 )
+                .navigationTitle("Yowee Configuration")
             }
         }
     }
 
     private func addPipeline() {
-        let count = store.pipelines.count
-        let pipeline = Pipeline(name: "New Pipeline", sortOrder: count)
-        store.pipelines.append(pipeline)
-        store.save()
-        selectedPipeline = pipeline
+        selectedPipeline = store.addPipeline()
     }
 
     private func deleteSelectedPipeline() {
         guard let pipeline = selectedPipeline else { return }
         selectedPipeline = nil
-        store.pipelines.removeAll { $0.id == pipeline.id }
-        store.save()
+        store.deletePipeline(id: pipeline.id)
     }
 
     private func deletePipelines(at offsets: IndexSet) {
         let sorted = pipelines
-        for index in offsets {
-            store.pipelines.removeAll { $0.id == sorted[index].id }
-        }
-        store.save()
+        for index in offsets { store.deletePipeline(id: sorted[index].id) }
     }
 
     private func movePipelines(from source: IndexSet, to destination: Int) {
-        var reordered = pipelines
-        reordered.move(fromOffsets: source, toOffset: destination)
-        for (index, pipeline) in reordered.enumerated() {
-            pipeline.sortOrder = index
-        }
-        store.save()
+        store.movePipelines(from: source, to: destination, in: pipelines)
     }
 }

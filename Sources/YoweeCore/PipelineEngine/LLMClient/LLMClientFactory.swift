@@ -1,19 +1,18 @@
 import Foundation
 
 public enum LLMClientFactory {
+    /// Returns the appropriate LLM client for `step` using the provided `credentials`.
+    /// Credentials are passed explicitly so this function is free of global state and easy to test.
     @Sendable
-    public static func client(for step: StepData) -> any LLMClient {
+    public static func client(for step: StepData, credentials: Credentials) -> any LLMClient {
         switch step.provider {
         case .anthropic:
-            let key = KeychainStore.load(for: step.provider.keychainKey) ?? ""
-            return AnthropicClient(apiKey: key)
+            return AnthropicClient(apiKey: credentials.anthropicKey)
         case .openai:
-            let key = KeychainStore.load(for: step.provider.keychainKey) ?? ""
-            let baseURL = UserDefaults.standard.string(forKey: "yowee.openai.baseURL") ?? "https://api.openai.com"
-            return OpenAIClient(apiKey: key, baseURL: baseURL)
+            return OpenAIClient(apiKey: credentials.openAIKey, baseURL: credentials.openAIBaseURL)
         case .ollama:
-            let baseURL = UserDefaults.standard.string(forKey: "yowee.ollama.baseURL") ?? "http://localhost:11434"
-            return OllamaClient(baseURL: baseURL, thinkingDisabled: step.ollamaThinkingDisabled)
+            let thinkingDisabled = step.providerOptions["thinkingDisabled"] ?? false
+            return OllamaClient(baseURL: credentials.ollamaBaseURL, thinkingDisabled: thinkingDisabled)
         }
     }
 }

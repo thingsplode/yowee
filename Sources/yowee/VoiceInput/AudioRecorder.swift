@@ -4,7 +4,7 @@ import Foundation
 /// Records microphone audio to a temporary M4A file.
 /// Exposes `audioLevel` (0–1, normalized from dB) updated at 20 Hz.
 @MainActor
-final class AudioRecorder: NSObject {
+final class AudioRecorder: NSObject, AudioRecording {
     /// Normalized audio level: 0 = silence, 1 = peak.
     private(set) var audioLevel: Float = 0
 

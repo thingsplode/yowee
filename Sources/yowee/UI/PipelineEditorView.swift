@@ -96,22 +96,11 @@ struct PipelineEditorView: View {
             .padding()
             .frame(minWidth: 200)
         }
-        .navigationTitle("")
+        .navigationTitle("Yowee Configuration")
     }
 
     private func addStep() {
-        let order = pipeline.steps.count
-        let defaultProvider = LLMProvider.openai
-        let step = PromptStep(
-            name: "Step \(order + 1)",
-            userTemplate: "{{input}}",
-            provider: defaultProvider,
-            modelID: defaultProvider.defaultModelID,
-            sortOrder: order
-        )
-        pipeline.steps.append(step)
-        store.save()
-        selectedStep = step
+        selectedStep = store.addStep(to: pipeline)
     }
 
     private func deleteSelectedStep() {
@@ -123,18 +112,10 @@ struct PipelineEditorView: View {
 
     private func deleteSteps(at offsets: IndexSet) {
         let sorted = pipeline.sortedSteps
-        for index in offsets {
-            pipeline.steps.removeAll { $0.id == sorted[index].id }
-        }
-        store.save()
+        for index in offsets { store.deleteStep(id: sorted[index].id, from: pipeline) }
     }
 
     private func moveSteps(from source: IndexSet, to destination: Int) {
-        var reordered = pipeline.sortedSteps
-        reordered.move(fromOffsets: source, toOffset: destination)
-        for (index, step) in reordered.enumerated() {
-            step.sortOrder = index
-        }
-        store.save()
+        store.moveSteps(from: source, to: destination, in: pipeline.sortedSteps, pipeline: pipeline)
     }
 }

@@ -6,6 +6,7 @@ struct ProviderSettingsView: View {
     @State private var openAIKey: String = ""
     @State private var ollamaURL: String = ""
     @State private var savedProvider: LLMProvider?
+    @State private var saveError: String?
 
     var body: some View {
         Form {
@@ -49,6 +50,11 @@ struct ProviderSettingsView: View {
                     .foregroundStyle(.green)
                     .font(.caption)
             }
+            if let error = saveError {
+                Label(error, systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.red)
+                    .font(.caption)
+            }
         }
         .formStyle(.grouped)
         .padding()
@@ -67,16 +73,26 @@ struct ProviderSettingsView: View {
 
     private func saveAnthropicKey() {
         guard !anthropicKey.isEmpty, !anthropicKey.hasPrefix("•") else { return }
-        try? KeychainStore.save(anthropicKey, for: LLMProvider.anthropic.keychainKey)
-        withAnimation { savedProvider = .anthropic }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { savedProvider = nil }
+        do {
+            try KeychainStore.save(anthropicKey, for: LLMProvider.anthropic.keychainKey)
+            saveError = nil
+            withAnimation { savedProvider = .anthropic }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { savedProvider = nil }
+        } catch {
+            withAnimation { saveError = "Failed to save Anthropic key: \(error.localizedDescription)" }
+        }
     }
 
     private func saveOpenAIKey() {
         guard !openAIKey.isEmpty, !openAIKey.hasPrefix("•") else { return }
-        try? KeychainStore.save(openAIKey, for: LLMProvider.openai.keychainKey)
-        withAnimation { savedProvider = .openai }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { savedProvider = nil }
+        do {
+            try KeychainStore.save(openAIKey, for: LLMProvider.openai.keychainKey)
+            saveError = nil
+            withAnimation { savedProvider = .openai }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { savedProvider = nil }
+        } catch {
+            withAnimation { saveError = "Failed to save OpenAI key: \(error.localizedDescription)" }
+        }
     }
 
     private func saveOllamaURL() {

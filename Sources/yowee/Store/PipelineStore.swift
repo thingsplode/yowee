@@ -17,6 +17,53 @@ final class PipelineStore {
         configDir.appendingPathComponent("pipelines.json")
     }
 
+    // MARK: - Mutations (each calls save() so callers don't have to)
+
+    func addPipeline(name: String = "New Pipeline") -> Pipeline {
+        let pipeline = Pipeline(name: name, sortOrder: pipelines.count)
+        pipelines.append(pipeline)
+        save()
+        return pipeline
+    }
+
+    func deletePipeline(id: UUID) {
+        pipelines.removeAll { $0.id == id }
+        save()
+    }
+
+    func movePipelines(from source: IndexSet, to destination: Int, in sorted: [Pipeline]) {
+        var reordered = sorted
+        reordered.move(fromOffsets: source, toOffset: destination)
+        for (index, pipeline) in reordered.enumerated() { pipeline.sortOrder = index }
+        save()
+    }
+
+    func addStep(to pipeline: Pipeline) -> PromptStep {
+        let defaultProvider = LLMProvider.openai
+        let step = PromptStep(
+            name: "Step \(pipeline.steps.count + 1)",
+            userTemplate: "{{input}}",
+            provider: defaultProvider,
+            modelID: defaultProvider.defaultModelID,
+            sortOrder: pipeline.steps.count
+        )
+        pipeline.steps.append(step)
+        save()
+        return step
+    }
+
+    func deleteStep(id: UUID, from pipeline: Pipeline) {
+        pipeline.steps.removeAll { $0.id == id }
+        save()
+    }
+
+    func moveSteps(from source: IndexSet, to destination: Int, in sorted: [PromptStep], pipeline: Pipeline) {
+        var reordered = sorted
+        reordered.move(fromOffsets: source, toOffset: destination)
+        for (index, step) in reordered.enumerated() { step.sortOrder = index }
+        save()
+    }
+
     // MARK: - Sorted access (single source of truth; replaces per-call sort at each call site)
 
     var sortedPipelines: [Pipeline] {

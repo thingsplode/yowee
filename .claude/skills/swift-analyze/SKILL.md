@@ -1,3 +1,8 @@
+---
+name: swift-analyze
+description: Run SwiftLint, SwiftFormat, and optionally Periphery on Yowee Swift sources. Reports violations and auto-fixes what it can.
+---
+
 # swift-analyze
 
 Run SwiftLint and SwiftFormat checks on the Yowee Swift sources, report all violations, then auto-fix what can be fixed automatically.

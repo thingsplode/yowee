@@ -5,8 +5,8 @@ import YoweeCore
 @MainActor
 final class YoweeOrchestrator {
     private let store: PipelineStore
-    private let runner = PipelineRunner(log: { AppLogger.log($0, category: "Ollama") })
-    private let loadingHUD = LoadingHUD()
+    private let runner = PipelineRunner(log: { AppLogger.log($0, category: "Runner") })
+    private let feedback: any OrchestratorFeedback
     private let flowMenu = YoweeMenu()
 
     // Tracked to prevent re-entrant triggers and to support future cancellation.
@@ -14,6 +14,16 @@ final class YoweeOrchestrator {
 
     init(store: PipelineStore) {
         self.store = store
+        self.feedback = DefaultOrchestratorFeedback()
+        GlobalShortcutManager.shared.onTrigger = { [weak self] in
+            self?.handleTrigger()
+        }
+    }
+
+    /// Designated initialiser for tests — inject a custom feedback implementation.
+    init(store: PipelineStore, feedback: any OrchestratorFeedback) {
+        self.store = store
+        self.feedback = feedback
         GlobalShortcutManager.shared.onTrigger = { [weak self] in
             self?.handleTrigger()
         }
@@ -31,7 +41,7 @@ final class YoweeOrchestrator {
 
         guard AccessibilityPermissionGuard.isTrusted else {
             log("FAIL: not trusted")
-            ErrorBanner.show(message: "yowee needs Accessibility permission. Open Configure yowee… or check System Settings → Privacy & Security → Accessibility.")
+            feedback.showError("yowee needs Accessibility permission. Open Configure yowee… or check System Settings → Privacy & Security → Accessibility.")
             return
         }
         log("accessibility trusted")
@@ -41,14 +51,14 @@ final class YoweeOrchestrator {
 
         guard let (text, element, selectionRange) = AccessibilityReader.selectedText() else {
             log("FAIL: no selected text")
-            ErrorBanner.show(message: "No text selected — select some text first.")
+            feedback.showError("No text selected — select some text first.")
             return
         }
         log("got text (\(text.count) chars, range loc=\(selectionRange.location) len=\(selectionRange.length))")
 
         let pipelines = store.sortedPipelines
         guard !pipelines.isEmpty else {
-            ErrorBanner.show(message: "No pipelines configured. Open Configure yowee… to add one.")
+            feedback.showError("No pipelines configured. Open Configure yowee… to add one.")
             return
         }
 
@@ -65,7 +75,7 @@ final class YoweeOrchestrator {
         guard let pipeline = pipelines.first(where: { $0.id == selectedID }) else { return }
 
         let steps = pipeline.sortedSteps.map(StepData.init)
-        loadingHUD.show(near: cursorPoint)
+        feedback.showProcessing(near: cursorPoint)
 
         pipelineTask = Task {
             // The Task inherits @MainActor from the enclosing scope, so clearing
@@ -75,7 +85,7 @@ final class YoweeOrchestrator {
                 let result = try await runner.run(steps: steps, input: text)
                 log("pipeline result: \(result.prefix(80))…")
                 await MainActor.run {
-                    loadingHUD.hide()
+                    feedback.hideProcessing()
                     originalApp?.activate(options: [.activateIgnoringOtherApps])
                 }
                 try? await Task.sleep(nanoseconds: 300_000_000)
@@ -85,8 +95,8 @@ final class YoweeOrchestrator {
                 }
             } catch {
                 await MainActor.run {
-                    loadingHUD.hide()
-                    ErrorBanner.show(message: error.localizedDescription)
+                    feedback.hideProcessing()
+                    feedback.showError(error.localizedDescription)
                     log("pipeline error: \(error)")
                 }
             }
