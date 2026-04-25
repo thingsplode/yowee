@@ -1,0 +1,24 @@
+# SwiftFormat config — Yowee
+# Run: swiftformat Sources
+# Check: swiftformat --lint Sources
+
+--swiftversion 6.0
+--indent 4
+--tabwidth 4
+--linebreaks lf
+--maxwidth 130
+--trimwhitespace always
+--header strip           # no file headers per project conventions
+--semicolons never
+--importgrouping testable-last
+--commas always
+--closingparen balanced
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--closurevoid remove
+--redundanttype inferred
+--self remove
+--voidtype void
+--stripunusedargs closure-only
+--disable sortedImports  # managed by SwiftLint sorted_imports

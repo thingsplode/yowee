@@ -1,0 +1,25 @@
+title = "Yowee"
+
+# Extend GitLeaks built-in ruleset (covers Anthropic, OpenAI, generic API keys,
+# private keys, connection strings, etc.)
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Project-specific allowances"
+
+# Build artefacts and Xcode export config are never committed, but guard
+# against accidental git add of the build/ tree.
+paths = [
+    '''(^|/)build/''',
+    '''ExportOptions\.plist''',
+    '''\.build/''',
+    '''DerivedData/''',
+]
+
+# Test fixtures use obviously fake keys that match no real secret format.
+# "test-api-key-123" and single-char keys ("k") won't match any built-in
+# rule, but list them here as documentation of known non-secrets.
+regexes = [
+    '''test-api-key-\d+''',
+]

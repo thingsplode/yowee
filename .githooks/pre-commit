@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# GitLeaks pre-commit hook — blocks commits containing secrets.
+# Managed via: git config core.hooksPath .githooks
+# Installed automatically by: ./build_run.sh
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+CONFIG="$REPO_ROOT/.gitleaks.toml"
+
+if ! command -v gitleaks &>/dev/null; then
+    echo "⚠  gitleaks not installed — secret scan skipped"
+    echo "   Install: brew install gitleaks"
+    exit 0
+fi
+
+echo ""
+echo "── GitLeaks (staged secret scan)"
+
+# protect --staged scans only the diff about to be committed.
+# --redact replaces the found secret value with REDACTED in output.
+# --verbose prints each file scanned and any findings.
+if gitleaks protect \
+        --staged \
+        --config "$CONFIG" \
+        --redact \
+        --verbose \
+        2>&1; then
+    echo "  ✓ No secrets detected"
+    exit 0
+else
+    echo ""
+    echo "  ✗ Potential secret(s) found in staged changes."
+    echo ""
+    echo "  If this is a false positive:"
+    echo "    1. Add an allowlist entry to .gitleaks.toml"
+    echo "    2. Stage that change first, then retry your original commit"
+    echo ""
+    echo "  Never commit real API keys — store them in the Keychain only."
+    exit 1
+fi
