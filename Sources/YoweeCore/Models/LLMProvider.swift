@@ -13,7 +13,9 @@ public enum LLMProvider: String, CaseIterable, Codable, Sendable {
         }
     }
 
-    public var keychainKey: String { "yowee.api.key.\(rawValue)" }
+    public var keychainKey: String {
+        "yowee.api.key.\(rawValue)"
+    }
 
     public var defaultModels: [String] {
         switch self {
@@ -23,7 +25,11 @@ public enum LLMProvider: String, CaseIterable, Codable, Sendable {
         }
     }
 
-    public var defaultModelID: String { defaultModels[0] }
+    public var defaultModelID: String {
+        defaultModels[0]
+    }
 
-    public var requiresAPIKey: Bool { self != .ollama }
+    public var requiresAPIKey: Bool {
+        self != .ollama
+    }
 }

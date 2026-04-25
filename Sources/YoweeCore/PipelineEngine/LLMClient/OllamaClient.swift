@@ -6,8 +6,8 @@ private let osLog = Logger(subsystem: "com.yowee.app", category: "Ollama")
 public final class OllamaClient: LLMClient {
     private let baseURL: String
     private let session: URLSession
-    // When true, passes "think": false in the request body — disables chain-of-thought
-    // on models that support it (e.g. deepseek-r1, qwq). Has no effect on other models.
+    /// When true, passes "think": false in the request body — disables chain-of-thought
+    /// on models that support it (e.g. deepseek-r1, qwq). Has no effect on other models.
     private let thinkingDisabled: Bool
 
     public init(
@@ -37,7 +37,7 @@ public final class OllamaClient: LLMClient {
         if thinkingDisabled { body["think"] = false }
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        osLog.debug("complete: model=\(model, privacy: .public) think=\(self.thinkingDisabled ? "off" : "on", privacy: .public)")
+        osLog.debug("complete: model=\(model, privacy: .public) think=\(thinkingDisabled ? "off" : "on", privacy: .public)")
         let start = Date()
 
         let (data, response): (Data, URLResponse)
@@ -53,7 +53,10 @@ public final class OllamaClient: LLMClient {
         guard let http = response as? HTTPURLResponse else {
             throw LLMError.apiError(statusCode: -1, body: "")
         }
-        osLog.debug("response: status=\(http.statusCode, privacy: .public) elapsed=\(elapsed, privacy: .public)s bytes=\(data.count, privacy: .public)")
+        osLog
+            .debug(
+                "response: status=\(http.statusCode, privacy: .public) elapsed=\(elapsed, privacy: .public)s bytes=\(data.count, privacy: .public)"
+            )
         guard http.statusCode == 200 else {
             let body = String(data: data, encoding: .utf8) ?? ""
             throw LLMError.apiError(statusCode: http.statusCode, body: body)
@@ -93,11 +96,14 @@ public final class OllamaClient: LLMClient {
     private func networkError(_ urlError: URLError) -> LLMError {
         switch urlError.code {
         case .timedOut:
-            return .apiError(statusCode: 0, body: "Ollama timed out. The model may still be loading — try again, or run `ollama pull <model>` first.")
+            .apiError(
+                statusCode: 0,
+                body: "Ollama timed out. The model may still be loading — try again, or run `ollama pull <model>` first."
+            )
         case .cannotConnectToHost, .networkConnectionLost, .notConnectedToInternet:
-            return .apiError(statusCode: 0, body: "Cannot connect to Ollama at \(baseURL). Run `ollama serve` to start it.")
+            .apiError(statusCode: 0, body: "Cannot connect to Ollama at \(baseURL). Run `ollama serve` to start it.")
         default:
-            return .apiError(statusCode: 0, body: urlError.localizedDescription)
+            .apiError(statusCode: 0, body: urlError.localizedDescription)
         }
     }
 }

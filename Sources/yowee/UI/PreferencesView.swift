@@ -8,8 +8,8 @@ enum PreferencesTab: String, CaseIterable {
         case .pipelines: "Pipelines"
         case .providers: "Providers"
         case .shortcuts: "Shortcuts"
-        case .log:       "Log"
-        case .about:     "About"
+        case .log: "Log"
+        case .about: "About"
         }
     }
 
@@ -18,8 +18,8 @@ enum PreferencesTab: String, CaseIterable {
         case .pipelines: "list.bullet.rectangle.portrait"
         case .providers: "key.horizontal"
         case .shortcuts: "keyboard"
-        case .log:       "doc.text.magnifyingglass"
-        case .about:     "info.circle"
+        case .log: "doc.text.magnifyingglass"
+        case .about: "info.circle"
         }
     }
 }
@@ -46,8 +46,8 @@ struct PreferencesView: View {
         case .pipelines: PipelineListView()
         case .providers: ProviderSettingsView()
         case .shortcuts: ShortcutSettingsView()
-        case .log:       LogView()
-        case .about:     AboutView()
+        case .log: LogView()
+        case .about: AboutView()
         }
     }
 }

@@ -1,5 +1,5 @@
-import Cocoa
 import ApplicationServices
+import Cocoa
 
 @MainActor
 enum TextReplacer {
@@ -81,12 +81,12 @@ enum TextReplacer {
         }
     }
 
-    private static func simulateCmdV() {  // called only by pasteViaCmdV
+    private static func simulateCmdV() { // called only by pasteViaCmdV
         let src = CGEventSource(stateID: .hidSystemState)
         let down = CGEvent(keyboardEventSource: src, virtualKey: 0x09, keyDown: true)
-        let up   = CGEvent(keyboardEventSource: src, virtualKey: 0x09, keyDown: false)
+        let up = CGEvent(keyboardEventSource: src, virtualKey: 0x09, keyDown: false)
         down?.flags = .maskCommand
-        up?.flags   = .maskCommand
+        up?.flags = .maskCommand
         // .cgSessionEventTap delivers to the frontmost app, not Yowee's own process.
         down?.post(tap: .cgSessionEventTap)
         up?.post(tap: .cgSessionEventTap)

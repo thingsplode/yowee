@@ -51,11 +51,11 @@ struct VoiceRecordingView: View {
             )
         case .transcribing:
             progressRow(icon: "waveform", label: "Transcribing…")
-        case .pipelineSelection(let text):
+        case let .pipelineSelection(text):
             selectionView(transcribedText: text)
-        case .processingPipeline(let name):
+        case let .processingPipeline(name):
             progressRow(icon: "gearshape.2.fill", label: "Running \"\(name)\"…")
-        case .error(let msg):
+        case let .error(msg):
             HStack(alignment: .top, spacing: 8) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange)
@@ -95,7 +95,7 @@ struct VoiceRecordingView: View {
                     .font(.headline)
             }
             Picker("Pipeline", selection: $session.selectedPipelineID) {
-                Text("Direct (no LLM)").tag(Optional<UUID>.none)
+                Text("Direct (no LLM)").tag(UUID?.none)
                 if !pipelines.isEmpty { Divider() }
                 ForEach(pipelines) { p in
                     Text(p.name).tag(Optional(p.id))
@@ -166,7 +166,7 @@ struct WaveformView: View {
         TimelineView(.animation(minimumInterval: 1.0 / 20.0)) { ctx in
             let t = ctx.date.timeIntervalSinceReferenceDate
             HStack(spacing: 4) {
-                ForEach(0..<barCount, id: \.self) { i in
+                ForEach(0 ..< barCount, id: \.self) { i in
                     Capsule()
                         .fill(Color.accentColor)
                         .frame(width: 4, height: barHeight(index: i, t: t))
@@ -182,7 +182,7 @@ struct WaveformView: View {
     private func barHeight(index: Int, t: Double) -> CGFloat {
         let amplitude = max(0.08, CGFloat(level))
         let offset = Double(index) * 0.8
-        let wave = (sin(t * 6 + offset) + 1) / 2   // 0…1, oscillates at ~1 Hz
+        let wave = (sin(t * 6 + offset) + 1) / 2 // 0…1, oscillates at ~1 Hz
         return 4 + amplitude * 32 * CGFloat(wave)
     }
 }

@@ -1,6 +1,6 @@
+import AppKit
 import Carbon.HIToolbox
 import Foundation
-import AppKit
 
 /// Registers and manages global keyboard shortcuts using the Carbon Event Manager.
 /// Carbon's RegisterEventHotKey requires neither Accessibility nor Input Monitoring permission.
@@ -13,9 +13,9 @@ import AppKit
 final class GlobalShortcutManager {
     static let shared = GlobalShortcutManager()
 
-    var onTrigger: (() -> Void)?    // text pipeline
+    var onTrigger: (() -> Void)? // text pipeline
     var onVoiceStart: (() -> Void)? // voice start
-    var onVoiceStop: (() -> Void)?  // voice stop
+    var onVoiceStop: (() -> Void)? // voice stop
 
     private(set) var currentHotKey: HotKey = .defaultYoweeTrigger
     private var hotKeyRefs: [UInt32: EventHotKeyRef] = [:]
@@ -42,7 +42,7 @@ final class GlobalShortcutManager {
     func registerVoice(start: HotKey, stop: HotKey) {
         installEventHandlerIfNeeded()
         registerHotKey(start, id: 2)
-        registerHotKey(stop,  id: 3)
+        registerHotKey(stop, id: 3)
     }
 
     func updateVoiceStart(_ hotKey: HotKey) {
@@ -61,17 +61,19 @@ final class GlobalShortcutManager {
         let selfPtr = Unmanaged.passUnretained(self).toOpaque()
         InstallEventHandler(
             GetApplicationEventTarget(),
-            { (_, event, userData) -> OSStatus in
+            { _, event, userData -> OSStatus in
                 guard let event, let ptr = userData else { return OSStatus(eventNotHandledErr) }
                 let mgr = Unmanaged<GlobalShortcutManager>.fromOpaque(ptr).takeUnretainedValue()
                 var hotKeyID = EventHotKeyID()
-                GetEventParameter(event,
-                                  UInt32(kEventParamDirectObject),
-                                  UInt32(typeEventHotKeyID),
-                                  nil,
-                                  MemoryLayout<EventHotKeyID>.size,
-                                  nil,
-                                  &hotKeyID)
+                GetEventParameter(
+                    event,
+                    UInt32(kEventParamDirectObject),
+                    UInt32(typeEventHotKeyID),
+                    nil,
+                    MemoryLayout<EventHotKeyID>.size,
+                    nil,
+                    &hotKeyID
+                )
                 let triggeredID = hotKeyID.id
                 DispatchQueue.main.async {
                     switch triggeredID {
@@ -94,8 +96,14 @@ final class GlobalShortcutManager {
         unregisterHotKey(id: id)
         let hotKeyID = EventHotKeyID(signature: 0x464C_4F57, id: id)
         var ref: EventHotKeyRef?
-        RegisterEventHotKey(hotKey.keyCode, hotKey.modifiers, hotKeyID,
-                            GetApplicationEventTarget(), 0, &ref)
+        RegisterEventHotKey(
+            hotKey.keyCode,
+            hotKey.modifiers,
+            hotKeyID,
+            GetApplicationEventTarget(),
+            0,
+            &ref
+        )
         if let ref { hotKeyRefs[id] = ref }
     }
 

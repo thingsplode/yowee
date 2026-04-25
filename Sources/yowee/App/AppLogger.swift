@@ -11,20 +11,30 @@ import os
 enum AppLogger {
     private static let subsystem = "com.yowee.app"
 
-    // One Logger per category, allocated once.
+    /// One Logger per category, allocated once.
     private static let loggers: [String: Logger] = Dictionary(uniqueKeysWithValues:
-        ["Voice", "Whisper", "Orchestrator", "Runner", "TextReplacer",
-         "ErrorBanner", "AudioRecorder", "StatusBar"]
-            .map { ($0, Logger(subsystem: subsystem, category: $0)) }
+        [
+            "Voice",
+            "Whisper",
+            "Orchestrator",
+            "Runner",
+            "TextReplacer",
+            "ErrorBanner",
+            "AudioRecorder",
+            "StatusBar"
+        ]
+        .map { ($0, Logger(subsystem: subsystem, category: $0)) }
     )
 
     static let logFileURL = URL(fileURLWithPath: "/tmp/yowee_debug.log")
 
-    // Actor serialises all file writes — equivalent to a serial DispatchQueue but
-    // expressed in Swift structured concurrency, avoiding raw thread primitives.
+    /// Actor serialises all file writes — equivalent to a serial DispatchQueue but
+    /// expressed in Swift structured concurrency, avoiding raw thread primitives.
     private actor LogWriter {
         private let url: URL
-        init(url: URL) { self.url = url }
+        init(url: URL) {
+            self.url = url
+        }
 
         func write(_ line: String) {
             guard let data = line.data(using: .utf8) else { return }

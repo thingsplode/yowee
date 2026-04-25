@@ -13,6 +13,7 @@ final class PipelineStore {
     private static var configDir: URL {
         URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".config/yowee")
     }
+
     static var pipelinesURL: URL {
         configDir.appendingPathComponent("pipelines.json")
     }
@@ -34,7 +35,9 @@ final class PipelineStore {
     func movePipelines(from source: IndexSet, to destination: Int, in sorted: [Pipeline]) {
         var reordered = sorted
         reordered.move(fromOffsets: source, toOffset: destination)
-        for (index, pipeline) in reordered.enumerated() { pipeline.sortOrder = index }
+        for (index, pipeline) in reordered.enumerated() {
+            pipeline.sortOrder = index
+        }
         save()
     }
 
@@ -60,7 +63,9 @@ final class PipelineStore {
     func moveSteps(from source: IndexSet, to destination: Int, in sorted: [PromptStep], pipeline: Pipeline) {
         var reordered = sorted
         reordered.move(fromOffsets: source, toOffset: destination)
-        for (index, step) in reordered.enumerated() { step.sortOrder = index }
+        for (index, step) in reordered.enumerated() {
+            step.sortOrder = index
+        }
         save()
     }
 
@@ -106,7 +111,7 @@ final class PipelineStore {
 
     /// Adds any missing default pipelines without touching existing ones.
     func restoreDefaults() {
-        let existing = Set(pipelines.map { $0.name })
+        let existing = Set(pipelines.map(\.name))
         let missing = makeDefaultPipelines().filter { !existing.contains($0.name) }
         guard !missing.isEmpty else { return }
         let nextOrder = (pipelines.map(\.sortOrder).max() ?? -1) + 1
@@ -166,7 +171,7 @@ final class PipelineStore {
                     modelID: "claude-sonnet-4-6",
                     sortOrder: 0
                 )
-            ]),
+            ])
         ]
     }
 }
@@ -190,15 +195,15 @@ private struct PipelineRecord: Codable {
         steps = p.steps.map(StepRecord.init(step:))
     }
 
-    // Custom decoder: `version` defaults to 0 so existing files without the field still load.
+    /// Custom decoder: `version` defaults to 0 so existing files without the field still load.
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        version    = (try? c.decode(Int.self,    forKey: .version))  ?? 0
-        id         = try  c.decode(UUID.self,    forKey: .id)
-        name       = try  c.decode(String.self,  forKey: .name)
-        sortOrder  = try  c.decode(Int.self,     forKey: .sortOrder)
-        createdAt  = try  c.decode(Date.self,    forKey: .createdAt)
-        steps      = try  c.decode([StepRecord].self, forKey: .steps)
+        version = (try? c.decode(Int.self, forKey: .version)) ?? 0
+        id = try c.decode(UUID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        sortOrder = try c.decode(Int.self, forKey: .sortOrder)
+        createdAt = try c.decode(Date.self, forKey: .createdAt)
+        steps = try c.decode([StepRecord].self, forKey: .steps)
     }
 }
 
@@ -223,17 +228,17 @@ private struct StepRecord: Codable {
         ollamaThinkingDisabled = s.ollamaThinkingDisabled
     }
 
-    // Custom decoder: `ollamaThinkingDisabled` defaults to false so existing JSON files still load.
+    /// Custom decoder: `ollamaThinkingDisabled` defaults to false so existing JSON files still load.
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        id                     = try  c.decode(UUID.self,    forKey: .id)
-        name                   = try  c.decode(String.self,  forKey: .name)
-        sortOrder              = try  c.decode(Int.self,     forKey: .sortOrder)
-        systemPrompt           = try? c.decode(String.self,  forKey: .systemPrompt)
-        userTemplate           = try  c.decode(String.self,  forKey: .userTemplate)
-        providerRaw            = try  c.decode(String.self,  forKey: .providerRaw)
-        modelID                = try  c.decode(String.self,  forKey: .modelID)
-        ollamaThinkingDisabled = (try? c.decode(Bool.self,   forKey: .ollamaThinkingDisabled)) ?? false
+        id = try c.decode(UUID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        sortOrder = try c.decode(Int.self, forKey: .sortOrder)
+        systemPrompt = try? c.decode(String.self, forKey: .systemPrompt)
+        userTemplate = try c.decode(String.self, forKey: .userTemplate)
+        providerRaw = try c.decode(String.self, forKey: .providerRaw)
+        modelID = try c.decode(String.self, forKey: .modelID)
+        ollamaThinkingDisabled = (try? c.decode(Bool.self, forKey: .ollamaThinkingDisabled)) ?? false
     }
 }
 

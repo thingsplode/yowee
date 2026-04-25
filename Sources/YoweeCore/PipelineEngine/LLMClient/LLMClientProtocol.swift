@@ -12,11 +12,11 @@ public enum LLMError: Error, LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .apiError(let code, let body) where code == 401:
+        case let .apiError(code, body) where code == 401:
             "API key rejected (401)\(body.isEmpty ? "" : ": \(body)")"
-        case .apiError(let code, _) where code == 429:
+        case let .apiError(code, _) where code == 429:
             "Rate limit hit (429). Wait a moment and try again."
-        case .apiError(let code, let body):
+        case let .apiError(code, body):
             "API error \(code): \(body.prefix(120))"
         case .emptyResponse: "The model returned an empty response"
         case .invalidURL: "Invalid API endpoint URL"
@@ -27,7 +27,7 @@ public enum LLMError: Error, LocalizedError {
     /// True for errors that are likely transient and safe to retry.
     public var isTransient: Bool {
         switch self {
-        case .apiError(let code, _): code == 429 || code >= 500
+        case let .apiError(code, _): code == 429 || code >= 500
         case .timeout: true
         default: false
         }

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct LogView: View {
-    @State private var content: String = ""
+    @State private var content = ""
     @State private var autoScroll = true
 
     private let logURL = URL(fileURLWithPath: "/tmp/yowee_debug.log")

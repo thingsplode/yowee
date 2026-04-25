@@ -22,7 +22,8 @@ public actor PipelineRunner {
     private let log: @Sendable (String) -> Void
 
     public init(
-        clientFactory: @escaping @Sendable (StepData) -> any LLMClient = { LLMClientFactory.client(for: $0, credentials: .load()) },
+        clientFactory: @escaping @Sendable (StepData)
+            -> any LLMClient = { LLMClientFactory.client(for: $0, credentials: .load()) },
         retryPolicy: RetryPolicy = .default,
         log: @escaping @Sendable (String) -> Void = { _ in }
     ) {
@@ -53,7 +54,7 @@ public actor PipelineRunner {
         label: String
     ) async throws -> String {
         let maxAttempts = max(1, retryPolicy.maxAttempts)
-        for attempt in 1...maxAttempts {
+        for attempt in 1 ... maxAttempts {
             do {
                 return try await client.complete(
                     system: step.systemPrompt,

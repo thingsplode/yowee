@@ -2,9 +2,9 @@ import SwiftUI
 import YoweeCore
 
 struct ProviderSettingsView: View {
-    @State private var anthropicKey: String = ""
-    @State private var openAIKey: String = ""
-    @State private var ollamaURL: String = ""
+    @State private var anthropicKey = ""
+    @State private var openAIKey = ""
+    @State private var ollamaURL = ""
     @State private var savedProvider: LLMProvider?
     @State private var saveError: String?
 

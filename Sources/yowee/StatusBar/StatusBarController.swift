@@ -10,7 +10,10 @@ final class MenuItemProxy: NSObject {
         self.action = action
         super.init()
     }
-    @objc func fire(_ sender: Any?) { action() }
+
+    @objc func fire(_ sender: Any?) {
+        action()
+    }
 }
 
 @MainActor
@@ -28,7 +31,7 @@ final class StatusBarController: NSObject {
     init(store: PipelineStore, shortcuts: ShortcutStore) {
         self.store = store
         self.shortcuts = shortcuts
-        self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
 
         statusItem.isVisible = true

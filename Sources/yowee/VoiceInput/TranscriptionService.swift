@@ -15,7 +15,9 @@ final class WhisperTranscriptionService: TranscriptionService {
     static let shared = WhisperTranscriptionService()
     private init() {}
 
-    var modelDownloadProgress: Double? { WhisperTranscriber.shared.downloadProgress }
+    var modelDownloadProgress: Double? {
+        WhisperTranscriber.shared.downloadProgress
+    }
 
     func transcribe(audioURL: URL) async throws -> String {
         try await WhisperTranscriber.shared.transcribe(audioURL: audioURL)

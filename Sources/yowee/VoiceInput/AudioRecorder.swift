@@ -32,9 +32,9 @@ final class AudioRecorder: NSObject, AudioRecording {
         // 16 kHz mono M4A — optimal input format for Whisper.
         let settings: [String: Any] = [
             AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-            AVSampleRateKey: 16_000.0,
+            AVSampleRateKey: 16000.0,
             AVNumberOfChannelsKey: 1,
-            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue,
+            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
         ]
 
         let rec = try AVAudioRecorder(url: url, settings: settings)

@@ -1,5 +1,5 @@
-import YoweeCore
 import Foundation
+import YoweeCore
 
 @Observable
 final class PromptStep: Identifiable {
@@ -31,7 +31,7 @@ final class PromptStep: Identifiable {
         self.name = name
         self.userTemplate = userTemplate
         self.systemPrompt = systemPrompt
-        self.providerRaw = provider.rawValue
+        providerRaw = provider.rawValue
         self.modelID = modelID
         self.sortOrder = sortOrder
         self.ollamaThinkingDisabled = ollamaThinkingDisabled
@@ -39,6 +39,11 @@ final class PromptStep: Identifiable {
 }
 
 extension PromptStep: Hashable {
-    static func == (lhs: PromptStep, rhs: PromptStep) -> Bool { lhs.id == rhs.id }
-    func hash(into hasher: inout Hasher) { hasher.combine(id) }
+    static func == (lhs: PromptStep, rhs: PromptStep) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 }

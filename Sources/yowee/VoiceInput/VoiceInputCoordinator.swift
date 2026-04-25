@@ -1,7 +1,7 @@
-import Cocoa
-import SwiftUI
 import AVFoundation
 import Carbon.HIToolbox
+import Cocoa
+import SwiftUI
 import YoweeCore
 
 /// Orchestrates the full voice-input flow:
@@ -27,8 +27,8 @@ final class VoiceInputCoordinator: NSObject {
     init(store: PipelineStore, shortcuts: ShortcutStore) {
         self.store = store
         self.shortcuts = shortcuts
-        self.recorder = AudioRecorder()
-        self.transcriber = WhisperTranscriptionService.shared
+        recorder = AudioRecorder()
+        transcriber = WhisperTranscriptionService.shared
     }
 
     /// Designated initialiser for tests — inject mock recorder and transcriber.
@@ -48,7 +48,7 @@ final class VoiceInputCoordinator: NSObject {
 
     func setup() {
         GlobalShortcutManager.shared.onVoiceStart = { [weak self] in self?.beginRecording() }
-        GlobalShortcutManager.shared.onVoiceStop  = { [weak self] in self?.endRecording() }
+        GlobalShortcutManager.shared.onVoiceStop = { [weak self] in self?.endRecording() }
 
         let stopKey = HotKey(keyCode: UInt32(kVK_ANSI_S), modifiers: UInt32(optionKey))
         GlobalShortcutManager.shared.registerVoice(start: shortcuts.voiceTrigger, stop: stopKey)
@@ -88,7 +88,10 @@ final class VoiceInputCoordinator: NSObject {
             Task {
                 guard await AudioRecorder.requestAccess() else {
                     log("beginRecording: mic permission denied")
-                    ErrorBanner.show(message: "Microphone access denied. Enable it in System Settings → Privacy & Security → Microphone.")
+                    ErrorBanner
+                        .show(
+                            message: "Microphone access denied. Enable it in System Settings → Privacy & Security → Microphone."
+                        )
                     return
                 }
                 startRecordingSession()
@@ -114,7 +117,7 @@ final class VoiceInputCoordinator: NSObject {
         Task {
             while case .recording = sessionState.voiceState {
                 sessionState.audioLevel = recorder.audioLevel
-                try? await Task.sleep(nanoseconds: 50_000_000)  // 20 Hz
+                try? await Task.sleep(nanoseconds: 50_000_000) // 20 Hz
             }
         }
 
@@ -182,7 +185,7 @@ final class VoiceInputCoordinator: NSObject {
                             panel.reflow()
                         }
                     }
-                    try? await Task.sleep(nanoseconds: 100_000_000)  // 10 Hz
+                    try? await Task.sleep(nanoseconds: 100_000_000) // 10 Hz
                 }
             }
 
@@ -233,9 +236,9 @@ final class VoiceInputCoordinator: NSObject {
         }
     }
 
-    // Extract the transcribed text from the current voiceState.
+    /// Extract the transcribed text from the current voiceState.
     private func transcribedText() -> String {
-        if case .pipelineSelection(let text) = sessionState.voiceState { return text }
+        if case let .pipelineSelection(text) = sessionState.voiceState { return text }
         return ""
     }
 

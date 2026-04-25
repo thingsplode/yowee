@@ -1,6 +1,6 @@
-import SwiftUI
-import Carbon.HIToolbox
 import AppKit
+import Carbon.HIToolbox
+import SwiftUI
 
 struct ShortcutSettingsView: View {
     @Environment(ShortcutStore.self) private var store
@@ -43,12 +43,11 @@ struct ShortcutSettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-
         }
         .formStyle(.grouped)
         .padding()
         .onAppear {
-            yoweeKey  = store.yoweeTrigger
+            yoweeKey = store.yoweeTrigger
             voiceKey = store.voiceTrigger
         }
         .onChange(of: yoweeKey) { _, newValue in
@@ -81,13 +80,23 @@ private struct ShortcutRecorderButton: NSViewRepresentable {
         button.isRecording = isRecording
     }
 
-    func makeCoordinator() -> Coordinator { Coordinator(self) }
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
 
     final class Coordinator {
         var parent: ShortcutRecorderButton
-        init(_ parent: ShortcutRecorderButton) { self.parent = parent }
-        func hotKeyChanged(_ hotKey: HotKey) { parent.hotKey = hotKey }
-        func recordingChanged(_ value: Bool)  { parent.isRecording = value }
+        init(_ parent: ShortcutRecorderButton) {
+            self.parent = parent
+        }
+
+        func hotKeyChanged(_ hotKey: HotKey) {
+            parent.hotKey = hotKey
+        }
+
+        func recordingChanged(_ value: Bool) {
+            parent.isRecording = value
+        }
     }
 }
 
@@ -95,8 +104,13 @@ final class RecorderNSButton: NSButton {
     fileprivate var coordinator: ShortcutRecorderButton.Coordinator?
     private var monitor: Any?
 
-    var hotKey: HotKey = .defaultYoweeTrigger { didSet { updateTitle() } }
-    var isRecording = false { didSet { updateTitle() } }
+    var hotKey: HotKey = .defaultYoweeTrigger {
+        didSet { updateTitle() }
+    }
+
+    var isRecording = false {
+        didSet { updateTitle() }
+    }
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -106,7 +120,10 @@ final class RecorderNSButton: NSButton {
         action = #selector(clicked)
     }
 
-    required init?(coder: NSCoder) { fatalError() }
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError()
+    }
 
     deinit {
         // Remove the monitor if the view is deallocated while recording is in progress
@@ -124,17 +141,19 @@ final class RecorderNSButton: NSButton {
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self else { return event }
             let mods = HotKey.carbonModifiers(from: event.modifierFlags)
-            guard mods != 0 && mods != UInt32(shiftKey) else { return event }
+            guard mods != 0, mods != UInt32(shiftKey) else { return event }
             let newKey = HotKey(keyCode: UInt32(event.keyCode), modifiers: mods)
-            self.hotKey = newKey
-            self.coordinator?.hotKeyChanged(newKey)
-            self.stopRecording()
+            hotKey = newKey
+            coordinator?.hotKeyChanged(newKey)
+            stopRecording()
             return nil
         }
     }
 
     private func stopRecording() {
-        if let m = monitor { NSEvent.removeMonitor(m); monitor = nil }
+        if let m = monitor { NSEvent.removeMonitor(m)
+            monitor = nil
+        }
         isRecording = false
         coordinator?.recordingChanged(false)
     }

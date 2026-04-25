@@ -112,7 +112,9 @@ struct PipelineEditorView: View {
 
     private func deleteSteps(at offsets: IndexSet) {
         let sorted = pipeline.sortedSteps
-        for index in offsets { store.deleteStep(id: sorted[index].id, from: pipeline) }
+        for index in offsets {
+            store.deleteStep(id: sorted[index].id, from: pipeline)
+        }
     }
 
     private func moveSteps(from source: IndexSet, to destination: Int) {

@@ -27,7 +27,7 @@ final class ShortcutStore {
               let record = try? JSONDecoder().decode(ShortcutRecord.self, from: data)
         else { return }
 
-        yoweeTrigger  = record.yoweeTrigger
+        yoweeTrigger = record.yoweeTrigger
         voiceTrigger = record.voiceTrigger
     }
 

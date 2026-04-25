@@ -1,5 +1,5 @@
-import YoweeCore
 import SwiftUI
+import YoweeCore
 
 struct StepEditorView: View {
     @Bindable var step: PromptStep
@@ -116,6 +116,6 @@ struct StepEditorView: View {
         }
         isFetchingModels = true
         defer { isFetchingModels = false }
-        fetchedModels = (try? await ModelFetcherService.shared.fetchModels(for: step.provider)) ?? []
+        fetchedModels = await (try? ModelFetcherService.shared.fetchModels(for: step.provider)) ?? []
     }
 }

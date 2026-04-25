@@ -9,12 +9,12 @@ final class YoweeOrchestrator {
     private let feedback: any OrchestratorFeedback
     private let flowMenu = YoweeMenu()
 
-    // Tracked to prevent re-entrant triggers and to support future cancellation.
+    /// Tracked to prevent re-entrant triggers and to support future cancellation.
     private var pipelineTask: Task<Void, Never>?
 
     init(store: PipelineStore) {
         self.store = store
-        self.feedback = DefaultOrchestratorFeedback()
+        feedback = DefaultOrchestratorFeedback()
         GlobalShortcutManager.shared.onTrigger = { [weak self] in
             self?.handleTrigger()
         }
@@ -41,7 +41,10 @@ final class YoweeOrchestrator {
 
         guard AccessibilityPermissionGuard.isTrusted else {
             log("FAIL: not trusted")
-            feedback.showError("yowee needs Accessibility permission. Open Configure yowee… or check System Settings → Privacy & Security → Accessibility.")
+            feedback
+                .showError(
+                    "yowee needs Accessibility permission. Open Configure yowee… or check System Settings → Privacy & Security → Accessibility."
+                )
             return
         }
         log("accessibility trusted")

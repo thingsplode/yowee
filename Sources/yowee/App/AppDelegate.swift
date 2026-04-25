@@ -22,7 +22,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         AppLogger.log("pipelines loaded from \(PipelineStore.pipelinesURL.path)", category: "Orchestrator")
 
         shortcuts.load()
-        AppLogger.log("shortcuts loaded: yowee=\(shortcuts.yoweeTrigger.displayString) voice=\(shortcuts.voiceTrigger.displayString)", category: "Orchestrator")
+        AppLogger.log(
+            "shortcuts loaded: yowee=\(shortcuts.yoweeTrigger.displayString) voice=\(shortcuts.voiceTrigger.displayString)",
+            category: "Orchestrator"
+        )
 
         statusBarController = StatusBarController(store: store, shortcuts: shortcuts)
         orchestrator = YoweeOrchestrator(store: store)

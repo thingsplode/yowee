@@ -23,7 +23,7 @@ final class LoadingHUD {
         p.ignoresMouseEvents = true
         p.positionNear(point, width: 140, height: 36)
         p.orderFrontRegardless()
-        self.panel = p
+        panel = p
     }
 
     func hide() {

@@ -1,7 +1,7 @@
 import Foundation
 
-// Value-type snapshot of a PromptStep for safe cross-actor passing.
-// The init(from:PromptStep) is in the yowee target to avoid importing SwiftData here.
+/// Value-type snapshot of a PromptStep for safe cross-actor passing.
+/// The init(from:PromptStep) is in the yowee target to avoid importing SwiftData here.
 public struct StepData: Sendable {
     public let systemPrompt: String?
     public let userTemplate: String

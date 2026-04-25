@@ -1,6 +1,6 @@
-import WhisperKit
 import Foundation
 import os
+import WhisperKit
 
 /// Wraps WhisperKit with a two-phase load: download first (with real progress), then load into memory.
 actor WhisperTranscriber {
@@ -14,14 +14,14 @@ actor WhisperTranscriber {
 
     private var state: LoadState = .unloaded
 
-    // Callers that arrive while a load is in progress wait here instead of spinning.
+    /// Callers that arrive while a load is in progress wait here instead of spinning.
     private var waiters: [CheckedContinuation<Void, Error>] = []
 
     // MARK: - Thread-safe progress
 
-    // The WhisperKit progress callback fires on an arbitrary background thread while the
-    // actor executor is suspended. OSAllocatedUnfairLock makes reads from any actor safe.
-    nonisolated private let progressLock = OSAllocatedUnfairLock<Double?>(initialState: nil)
+    /// The WhisperKit progress callback fires on an arbitrary background thread while the
+    /// actor executor is suspended. OSAllocatedUnfairLock makes reads from any actor safe.
+    private nonisolated let progressLock = OSAllocatedUnfairLock<Double?>(initialState: nil)
 
     /// 0–1 while downloading the model; nil when not downloading (cached or loading into memory).
     nonisolated var downloadProgress: Double? {
@@ -94,7 +94,7 @@ actor WhisperTranscriber {
     func transcribe(audioURL: URL) async throws -> String {
         log("transcribe: starting (\(audioURL.lastPathComponent))")
         try await prepare()
-        guard case .ready(let kit) = state else {
+        guard case let .ready(kit) = state else {
             throw TranscriptionError.modelNotLoaded
         }
         log("transcribe: running")
@@ -110,14 +110,13 @@ actor WhisperTranscriber {
     func warmUp() {
         log("warmUp: triggered")
         Task {
-            do { try await prepare() }
-            catch { log("warmUp: failed — \(error)") }
+            do { try await prepare() } catch { log("warmUp: failed — \(error)") }
         }
     }
 
     // MARK: - Logging
 
-    nonisolated private func log(_ msg: String) {
+    private nonisolated func log(_ msg: String) {
         AppLogger.log(msg, category: "Whisper")
     }
 }
@@ -125,5 +124,7 @@ actor WhisperTranscriber {
 enum TranscriptionError: Error, LocalizedError {
     case modelNotLoaded
 
-    var errorDescription: String? { "Speech model failed to load." }
+    var errorDescription: String? {
+        "Speech model failed to load."
+    }
 }

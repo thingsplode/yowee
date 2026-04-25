@@ -22,6 +22,11 @@ final class Pipeline: Identifiable {
 }
 
 extension Pipeline: Hashable {
-    static func == (lhs: Pipeline, rhs: Pipeline) -> Bool { lhs.id == rhs.id }
-    func hash(into hasher: inout Hasher) { hasher.combine(id) }
+    static func == (lhs: Pipeline, rhs: Pipeline) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 }

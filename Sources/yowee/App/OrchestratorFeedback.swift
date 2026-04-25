@@ -15,7 +15,15 @@ protocol OrchestratorFeedback: AnyObject {
 final class DefaultOrchestratorFeedback: OrchestratorFeedback {
     private let hud = LoadingHUD()
 
-    func showProcessing(near point: NSPoint) { hud.show(near: point) }
-    func hideProcessing() { hud.hide() }
-    func showError(_ message: String) { ErrorBanner.show(message: message) }
+    func showProcessing(near point: NSPoint) {
+        hud.show(near: point)
+    }
+
+    func hideProcessing() {
+        hud.hide()
+    }
+
+    func showError(_ message: String) {
+        ErrorBanner.show(message: message)
+    }
 }

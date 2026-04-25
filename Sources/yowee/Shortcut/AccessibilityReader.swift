@@ -1,5 +1,5 @@
-import Cocoa
 import ApplicationServices
+import Cocoa
 
 @MainActor
 enum AccessibilityReader {

@@ -4,7 +4,6 @@ import YoweeCore
 
 @MainActor
 final class PreferencesWindowController: NSWindowController {
-
     init(store: PipelineStore, shortcuts: ShortcutStore) {
         let rootView = PreferencesView()
             .environment(store)
@@ -26,5 +25,8 @@ final class PreferencesWindowController: NSWindowController {
         super.init(window: window)
     }
 
-    required init?(coder: NSCoder) { fatalError() }
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError()
+    }
 }

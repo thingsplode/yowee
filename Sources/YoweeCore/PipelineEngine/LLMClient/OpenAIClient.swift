@@ -85,5 +85,6 @@ private struct OpenAIResponse: Decodable {
         struct Message: Decodable { let content: String }
         let message: Message
     }
+
     let choices: [Choice]
 }

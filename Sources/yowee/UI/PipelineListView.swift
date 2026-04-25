@@ -4,7 +4,9 @@ struct PipelineListView: View {
     @Environment(PipelineStore.self) private var store
     @State private var selectedPipeline: Pipeline?
 
-    private var pipelines: [Pipeline] { store.sortedPipelines }
+    private var pipelines: [Pipeline] {
+        store.sortedPipelines
+    }
 
     var body: some View {
         NavigationSplitView {
@@ -83,7 +85,9 @@ struct PipelineListView: View {
 
     private func deletePipelines(at offsets: IndexSet) {
         let sorted = pipelines
-        for index in offsets { store.deletePipeline(id: sorted[index].id) }
+        for index in offsets {
+            store.deletePipeline(id: sorted[index].id)
+        }
     }
 
     private func movePipelines(from source: IndexSet, to destination: Int) {

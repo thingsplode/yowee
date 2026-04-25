@@ -14,7 +14,7 @@ final class VoiceRecordingPanel {
 
     // Retained for the keyboard event handler (set/read on main thread only).
     private var session: VoiceSessionState?
-    private var pipelineIDs: [UUID?] = []  // [nil, id1, id2, …] mirrors Picker order
+    private var pipelineIDs: [UUID?] = [] // [nil, id1, id2, …] mirrors Picker order
     private var onCancel: (() -> Void)?
     private var onConfirm: (() -> Void)?
 
@@ -28,7 +28,7 @@ final class VoiceRecordingPanel {
         dismiss()
 
         self.session = session
-        self.pipelineIDs = [nil] + pipelines.map { Optional($0.id) }
+        pipelineIDs = [nil] + pipelines.map { Optional($0.id) }
         self.onCancel = onCancel
         self.onConfirm = onConfirm
 
@@ -77,7 +77,9 @@ final class VoiceRecordingPanel {
     }
 
     func dismiss() {
-        if let m = eventMonitor { NSEvent.removeMonitor(m); eventMonitor = nil }
+        if let m = eventMonitor { NSEvent.removeMonitor(m)
+            eventMonitor = nil
+        }
         panel?.orderOut(nil)
         panel = nil
         hostingView = nil
@@ -103,7 +105,7 @@ final class VoiceRecordingPanel {
         hosting.layoutSubtreeIfNeeded()
         let naturalHeight = max(120, min(hosting.fittingSize.height + 16, 400))
         var frame = p.frame
-        frame.origin.y += frame.height - naturalHeight  // keep top edge fixed
+        frame.origin.y += frame.height - naturalHeight // keep top edge fixed
         frame.size.height = naturalHeight
         p.setFrame(frame, display: true, animate: false)
         hosting.frame = NSRect(x: 0, y: 0, width: width, height: naturalHeight)
@@ -115,7 +117,7 @@ final class VoiceRecordingPanel {
         let flags = event.modifierFlags.intersection([.command, .option, .shift, .control])
 
         // Esc or ⌥Esc → cancel (works in all active states whenever the app has key focus)
-        if event.keyCode == 53 /* Escape */ && (flags.isEmpty || flags == .option) {
+        if event.keyCode == 53 /* Escape */, flags.isEmpty || flags == .option {
             // Defer past the current event-dispatch cycle so that window activation
             // in cancel() fires after the system finishes processing this key event.
             Task { @MainActor [weak self] in self?.onCancel?() }
@@ -125,17 +127,17 @@ final class VoiceRecordingPanel {
         guard let session, case .pipelineSelection = session.voiceState else { return event }
 
         // Return (no modifiers) → confirm.
-        if event.keyCode == 36 /* Return */ && flags.isEmpty {
+        if event.keyCode == 36 /* Return */, flags.isEmpty {
             Task { @MainActor [weak self] in self?.onConfirm?() }
             return nil
         }
 
         // ⌥↓ / ⌥↑ → cycle pipeline selection (pure state update, no activation needed)
-        if event.keyCode == 125 /* ↓ */ && flags == .option {
+        if event.keyCode == 125 /* ↓ */, flags == .option {
             cycleSelection(forward: true)
             return nil
         }
-        if event.keyCode == 126 /* ↑ */ && flags == .option {
+        if event.keyCode == 126 /* ↑ */, flags == .option {
             cycleSelection(forward: false)
             return nil
         }
