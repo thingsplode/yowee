@@ -1,0 +1,61 @@
+# Xcode / macOS
+.DS_Store
+*.xcuserstate
+xcuserdata/
+*.xccheckout
+*.xcscmblueprint
+*.moved-aside
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Packages/
+Package.resolved
+
+# CocoaPods (not used, but guard anyway)
+Pods/
+Podfile.lock
+
+# Carthage
+Carthage/Build/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Playgrounds
+playground.xcworkspace
+timeline.xctimeline
+
+# VS Code / editors
+.vscode/
+*.swp
+*~
+
+# Secrets — never commit
+.env
+*.p8
+AuthKey_*.p8
+*.mobileprovision
+
+# Build artefacts
+*.app
+*.dmg
+*.pkg
+
+# Test output
+*.junit
+*.lcov
+xcov_report/
+coverage/
+
+# Logs
+/tmp/yowee_debug.log
+test_testing

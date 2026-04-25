@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>yowee</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.yowee.app</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSSupportsAutomaticTermination</key>
+    <false/>
+    <key>NSSupportsSuddenTermination</key>
+    <false/>
+    <key>NSAccessibilityUsageDescription</key>
+    <string>yowee reads the selected text in the frontmost app and replaces it with the pipeline result.</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>yowee uses Apple Events to interact with other applications.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>yowee uses the microphone to record voice input for transcription.</string>
+</dict>
+</plist>
