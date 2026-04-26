@@ -12,8 +12,6 @@ Installation:
 ```bash
  brew install --cask thingsplode/yowee/yowee
 ```
-```
-```
 ---
 
 ## Requirements
