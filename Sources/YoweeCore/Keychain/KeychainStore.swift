@@ -23,7 +23,7 @@ public enum KeychainStore {
             kSecAttrAccount as String: key,
             kSecAttrService as String: "yowee",
             kSecValueData as String: data,
-            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
         ]
         if let access { query[kSecAttrAccess as String] = access }
         SecItemDelete(query as CFDictionary)
@@ -37,7 +37,7 @@ public enum KeychainStore {
             kSecAttrAccount as String: key,
             kSecAttrService as String: "yowee",
             kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne
+            kSecMatchLimit as String: kSecMatchLimitOne,
         ]
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
@@ -49,7 +49,7 @@ public enum KeychainStore {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: key,
-            kSecAttrService as String: "yowee"
+            kSecAttrService as String: "yowee",
         ]
         SecItemDelete(query as CFDictionary)
     }

@@ -5,7 +5,9 @@ struct ProviderSettingsView: View {
     @State private var anthropicKey = ""
     @State private var openAIKey = ""
     @State private var ollamaURL = ""
+    @State private var tavilyKey = ""
     @State private var savedProvider: LLMProvider?
+    @State private var savedTavily = false
     @State private var saveError: String?
 
     var body: some View {
@@ -45,6 +47,26 @@ struct ProviderSettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
+            Section {
+                SecureField("Tavily API Key", text: $tavilyKey)
+                    .onSubmit { saveTavilyKey() }
+                    .textContentType(.password)
+
+                Button("Save Tavily Key") { saveTavilyKey() }
+                    .disabled(tavilyKey.isEmpty)
+            } header: {
+                Label("Tavily (Web Search)", systemImage: "magnifyingglass")
+            } footer: {
+                Text("Required for Research steps. Get a free API key at app.tavily.com (1 000 searches/month free).")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            if savedTavily {
+                Label("Tavily key saved.", systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                    .font(.caption)
+            }
             if let provider = savedProvider {
                 Label("\(provider.displayName) settings saved.", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
@@ -69,6 +91,9 @@ struct ProviderSettingsView: View {
             openAIKey = String(repeating: "•", count: min(key.count, 20))
         }
         ollamaURL = UserDefaults.standard.string(forKey: "yowee.ollama.baseURL") ?? ""
+        if let key = KeychainStore.load(for: Credentials.tavilyKeychainKey) {
+            tavilyKey = String(repeating: "•", count: min(key.count, 20))
+        }
     }
 
     private func saveAnthropicKey() {
@@ -100,5 +125,17 @@ struct ProviderSettingsView: View {
         UserDefaults.standard.set(url.isEmpty ? nil : url, forKey: "yowee.ollama.baseURL")
         withAnimation { savedProvider = .ollama }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { savedProvider = nil }
+    }
+
+    private func saveTavilyKey() {
+        guard !tavilyKey.isEmpty, !tavilyKey.hasPrefix("•") else { return }
+        do {
+            try KeychainStore.save(tavilyKey, for: Credentials.tavilyKeychainKey)
+            saveError = nil
+            withAnimation { savedTavily = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { savedTavily = false }
+        } catch {
+            withAnimation { saveError = "Failed to save Tavily key: \(error.localizedDescription)" }
+        }
     }
 }

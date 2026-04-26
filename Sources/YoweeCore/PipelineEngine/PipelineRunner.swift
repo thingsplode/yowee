@@ -19,16 +19,19 @@ public struct RetryPolicy: Sendable {
 public actor PipelineRunner {
     private let clientFactory: @Sendable (StepData) -> any LLMClient
     private let retryPolicy: RetryPolicy
+    private let session: URLSession
     private let log: @Sendable (String) -> Void
 
     public init(
         clientFactory: @escaping @Sendable (StepData)
             -> any LLMClient = { LLMClientFactory.client(for: $0, credentials: .load()) },
         retryPolicy: RetryPolicy = .default,
+        session: URLSession = .shared,
         log: @escaping @Sendable (String) -> Void = { _ in }
     ) {
         self.clientFactory = clientFactory
         self.retryPolicy = retryPolicy
+        self.session = session
         self.log = log
     }
 
@@ -36,15 +39,57 @@ public actor PipelineRunner {
         guard !steps.isEmpty else { return input }
         var current = input
         for step in steps {
-            let rendered = try PromptRenderer.render(template: step.userTemplate, input: current)
-            let client = clientFactory(step)
-            let label = "\(step.provider.rawValue)/\(step.modelID)"
-            log("step '\(label)' starting")
-            let start = Date()
-            current = try await attempt(client: client, step: step, rendered: rendered, label: label)
-            log("step '\(label)' done in \(Int(-start.timeIntervalSinceNow))s")
+            switch step.stepKind {
+            case .prompt:
+                let rendered = try PromptRenderer.render(template: step.userTemplate, input: current)
+                let client = clientFactory(step)
+                let label = "\(step.provider.rawValue)/\(step.modelID)"
+                log("step '\(label)' starting")
+                let start = Date()
+                current = try await attempt(client: client, step: step, rendered: rendered, label: label)
+                log("step '\(label)' done in \(Int(-start.timeIntervalSinceNow))s")
+            case .research:
+                log("research step starting (query: \(current.prefix(60))…)")
+                let start = Date()
+                current = try await runResearch(step: step, query: current)
+                log("research step done in \(Int(-start.timeIntervalSinceNow))s")
+            }
         }
         return current
+    }
+
+    private func runResearch(step: StepData, query: String) async throws -> String {
+        let renderedQuery = step.queryTemplate.replacingOccurrences(of: "{{input}}", with: query)
+        let results = try await TavilyClient(apiKey: step.tavilyKey, session: session)
+            .search(query: renderedQuery, maxResults: step.tavilyMaxResults, depth: step.tavilySearchDepth)
+
+        let jina = JinaReader(session: session)
+        let pages: [String?] = await withTaskGroup(of: (Int, String?).self) { group in
+            for (idx, result) in results.enumerated() {
+                group.addTask { await (idx, jina.fetchMarkdown(url: result.url)) }
+            }
+            var ordered = [String?](repeating: nil, count: results.count)
+            for await (idx, page) in group {
+                ordered[idx] = page
+            }
+            return ordered
+        }
+
+        return formatResearch(query: renderedQuery, results: results, pages: pages)
+    }
+
+    private func formatResearch(query: String, results: [TavilyResult], pages: [String?]) -> String {
+        var md = "# Research: \(query)\n\nFound \(results.count) source(s).\n"
+        for (idx, result) in results.enumerated() {
+            md += "\n---\n\n## \(idx + 1). \(result.title)\n**Source:** \(result.url)\n\n"
+            if let page = pages[idx], !page.isEmpty {
+                md += page
+            } else {
+                md += result.content
+            }
+            md += "\n"
+        }
+        return md
     }
 
     private func attempt(

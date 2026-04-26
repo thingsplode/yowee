@@ -14,11 +14,14 @@ struct PipelineEditorView: View {
             return "Add at least one step."
         }
         for step in pipeline.steps {
-            if !step.userTemplate.contains("{{input}}") {
-                return "Step '\(step.modelID)' template must contain {{input}}."
+            if step.stepKind == .prompt, !step.userTemplate.contains("{{input}}") {
+                return "Step '\(step.name.isEmpty ? step.modelID : step.name)' template must contain {{input}}."
             }
-            if step.modelID.trimmingCharacters(in: .whitespaces).isEmpty {
-                return "All steps must have a model ID."
+            if step.stepKind == .research, !step.queryTemplate.contains("{{input}}") {
+                return "Step '\(step.name)' query template must contain {{input}}."
+            }
+            if step.stepKind == .prompt, step.modelID.trimmingCharacters(in: .whitespaces).isEmpty {
+                return "All prompt steps must have a model ID."
             }
         }
         return nil
@@ -66,34 +69,43 @@ struct PipelineEditorView: View {
             }
             .frame(minWidth: 120, maxWidth: 220)
 
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 0) {
+                // Pipeline Name — pinned so it stays visible when step content scrolls.
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Pipeline Name").font(.caption).foregroundStyle(.secondary)
                     TextField("Name", text: $pipeline.name)
                         .textFieldStyle(.roundedBorder)
                         .onChange(of: pipeline.name) { _, _ in store.save() }
                 }
+                .padding([.horizontal, .top], 16)
+                .padding(.bottom, 12)
 
-                if let step = selectedStep {
-                    Divider()
-                    StepEditorView(step: step)
-                } else {
-                    ContentUnavailableView(
-                        "Select a Step",
-                        systemImage: "chevron.right.circle",
-                        description: Text("Choose a step to edit its prompt.")
-                    )
+                Divider()
+
+                // Step editor — scrollable so content never pushes the tab bar or header off-screen.
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        if let step = selectedStep {
+                            StepEditorView(step: step)
+                        } else {
+                            ContentUnavailableView(
+                                "Select a Step",
+                                systemImage: "chevron.right.circle",
+                                description: Text("Choose a step to edit its prompt.")
+                            )
+                            .frame(maxWidth: .infinity)
+                        }
+
+                        if let error = validationError {
+                            Label(error, systemImage: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.orange)
+                                .font(.caption)
+                        }
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-
-                if let error = validationError {
-                    Label(error, systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.orange)
-                        .font(.caption)
-                }
-
-                Spacer()
             }
-            .padding()
             .frame(minWidth: 200)
         }
         .navigationTitle("Yowee Configuration")

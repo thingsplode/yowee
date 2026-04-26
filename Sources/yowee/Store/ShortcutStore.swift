@@ -8,6 +8,7 @@ final class ShortcutStore {
     var yoweeTrigger: HotKey = .defaultYoweeTrigger
     var voiceTrigger: HotKey = .defaultVoiceTrigger
     var voiceStopTrigger: HotKey = .defaultVoiceStopTrigger
+    var voiceCancelTrigger: HotKey = .defaultVoiceCancelTrigger
 
     private static var shortcutsURL: URL {
         URL(fileURLWithPath: NSHomeDirectory())
@@ -31,10 +32,16 @@ final class ShortcutStore {
         yoweeTrigger = record.yoweeTrigger
         voiceTrigger = record.voiceTrigger
         voiceStopTrigger = record.voiceStopTrigger
+        voiceCancelTrigger = record.voiceCancelTrigger
     }
 
     func save() {
-        let record = ShortcutRecord(yoweeTrigger: yoweeTrigger, voiceTrigger: voiceTrigger, voiceStopTrigger: voiceStopTrigger)
+        let record = ShortcutRecord(
+            yoweeTrigger: yoweeTrigger,
+            voiceTrigger: voiceTrigger,
+            voiceStopTrigger: voiceStopTrigger,
+            voiceCancelTrigger: voiceCancelTrigger
+        )
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         guard let data = try? encoder.encode(record) else { return }
@@ -47,19 +54,22 @@ private struct ShortcutRecord: Codable {
     let yoweeTrigger: HotKey
     let voiceTrigger: HotKey
     let voiceStopTrigger: HotKey
+    let voiceCancelTrigger: HotKey
 
-    /// Custom decoder: `voiceStopTrigger` defaults to ⌥S so existing JSON files still load.
+    /// Custom decoder: new fields default gracefully so existing JSON files still load.
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         yoweeTrigger = try c.decode(HotKey.self, forKey: .yoweeTrigger)
         voiceTrigger = try c.decode(HotKey.self, forKey: .voiceTrigger)
         voiceStopTrigger = (try? c.decode(HotKey.self, forKey: .voiceStopTrigger)) ?? .defaultVoiceStopTrigger
+        voiceCancelTrigger = (try? c.decode(HotKey.self, forKey: .voiceCancelTrigger)) ?? .defaultVoiceCancelTrigger
     }
 
-    init(yoweeTrigger: HotKey, voiceTrigger: HotKey, voiceStopTrigger: HotKey) {
+    init(yoweeTrigger: HotKey, voiceTrigger: HotKey, voiceStopTrigger: HotKey, voiceCancelTrigger: HotKey) {
         self.yoweeTrigger = yoweeTrigger
         self.voiceTrigger = voiceTrigger
         self.voiceStopTrigger = voiceStopTrigger
+        self.voiceCancelTrigger = voiceCancelTrigger
     }
 }
 

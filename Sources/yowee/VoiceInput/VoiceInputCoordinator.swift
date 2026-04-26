@@ -48,8 +48,13 @@ final class VoiceInputCoordinator: NSObject {
     func setup() {
         GlobalShortcutManager.shared.onVoiceStart = { [weak self] in self?.beginRecording() }
         GlobalShortcutManager.shared.onVoiceStop = { [weak self] in self?.endRecording() }
+        GlobalShortcutManager.shared.onVoiceCancel = { [weak self] in self?.cancel() }
 
-        GlobalShortcutManager.shared.registerVoice(start: shortcuts.voiceTrigger, stop: shortcuts.voiceStopTrigger)
+        GlobalShortcutManager.shared.registerVoice(
+            start: shortcuts.voiceTrigger,
+            stop: shortcuts.voiceStopTrigger,
+            cancel: shortcuts.voiceCancelTrigger
+        )
 
         NotificationCenter.default.addObserver(
             self,
@@ -64,6 +69,7 @@ final class VoiceInputCoordinator: NSObject {
     @objc private func shortcutsChanged() {
         GlobalShortcutManager.shared.updateVoiceStart(shortcuts.voiceTrigger)
         GlobalShortcutManager.shared.updateVoiceStop(shortcuts.voiceStopTrigger)
+        GlobalShortcutManager.shared.updateVoiceCancel(shortcuts.voiceCancelTrigger)
     }
 
     // MARK: - Recording phase
@@ -228,7 +234,8 @@ final class VoiceInputCoordinator: NSObject {
         guard sessionState.voiceState != .idle else { return }
         log("confirmSelection: pipelineID=\(sessionState.selectedPipelineID?.uuidString ?? "none")")
         if let pipelineID = sessionState.selectedPipelineID,
-           let pipeline = store.pipelines.first(where: { $0.id == pipelineID }) {
+           let pipeline = store.pipelines.first(where: { $0.id == pipelineID })
+        {
             runPipeline(pipeline, input: transcribedText())
         } else {
             insertText(transcribedText())
@@ -248,7 +255,8 @@ final class VoiceInputCoordinator: NSObject {
         sessionState.voiceState = .processingPipeline(name: pipeline.name)
         panel.reflow()
 
-        let steps = pipeline.sortedSteps.map(StepData.init)
+        let credentials = Credentials.load()
+        let steps = pipeline.sortedSteps.map { StepData(from: $0, credentials: credentials) }
         pipelineTask = Task {
             do {
                 let result = try await runner.run(steps: steps, input: input)
@@ -321,7 +329,8 @@ final class VoiceInputCoordinator: NSObject {
             return "Network error while loading speech model. Check your connection and try again."
         }
         if let firstSentence = raw.split(separator: "\n").first.map(String.init),
-           !firstSentence.contains("(\"") {
+           !firstSentence.contains("(\"")
+        {
             return "Transcription failed: \(firstSentence)"
         }
         return "Transcription failed. Please try again."

@@ -12,6 +12,8 @@ struct HotKey: Codable, Equatable {
     static let defaultVoiceTrigger = HotKey(keyCode: UInt32(kVK_ANSI_R), modifiers: UInt32(optionKey))
     /// ⌥S — voice recording stop
     static let defaultVoiceStopTrigger = HotKey(keyCode: UInt32(kVK_ANSI_S), modifiers: UInt32(optionKey))
+    /// ⌥⎋ — cancel recording and close panel
+    static let defaultVoiceCancelTrigger = HotKey(keyCode: UInt32(kVK_Escape), modifiers: UInt32(optionKey))
 
     // MARK: - CGEvent modifier conversion
 

@@ -8,7 +8,7 @@ final class PipelineStore {
     var pipelines: [Pipeline] = []
 
     /// Current storage schema version. Bump when PipelineRecord or StepRecord fields change.
-    static let storageVersion = 1
+    static let storageVersion = 2
 
     private static var configDir: URL {
         URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".config/yowee")
@@ -89,7 +89,8 @@ final class PipelineStore {
         }
 
         if fm.fileExists(atPath: file.path),
-           let data = try? Data(contentsOf: file) {
+           let data = try? Data(contentsOf: file)
+        {
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
             if let records = try? decoder.decode([PipelineRecord].self, from: data) {
@@ -143,7 +144,7 @@ final class PipelineStore {
                     provider: .anthropic,
                     modelID: "claude-sonnet-4-6",
                     sortOrder: 0
-                )
+                ),
             ]),
             Pipeline(name: "Make Concise", sortOrder: 1, steps: [
                 PromptStep(
@@ -152,7 +153,7 @@ final class PipelineStore {
                     provider: .anthropic,
                     modelID: "claude-sonnet-4-6",
                     sortOrder: 0
-                )
+                ),
             ]),
             Pipeline(name: "Translate to English", sortOrder: 2, steps: [
                 PromptStep(
@@ -161,7 +162,7 @@ final class PipelineStore {
                     provider: .anthropic,
                     modelID: "claude-sonnet-4-6",
                     sortOrder: 0
-                )
+                ),
             ]),
             Pipeline(name: "Change Tone: Professional", sortOrder: 3, steps: [
                 PromptStep(
@@ -170,8 +171,8 @@ final class PipelineStore {
                     provider: .anthropic,
                     modelID: "claude-sonnet-4-6",
                     sortOrder: 0
-                )
-            ])
+                ),
+            ]),
         ]
     }
 }
@@ -216,6 +217,10 @@ private struct StepRecord: Codable {
     let providerRaw: String
     let modelID: String
     let ollamaThinkingDisabled: Bool
+    let stepKindRaw: String
+    let queryTemplate: String
+    let tavilyMaxResults: Int
+    let tavilySearchDepth: String
 
     init(step s: PromptStep) {
         id = s.id
@@ -226,9 +231,13 @@ private struct StepRecord: Codable {
         providerRaw = s.providerRaw
         modelID = s.modelID
         ollamaThinkingDisabled = s.ollamaThinkingDisabled
+        stepKindRaw = s.stepKind.rawValue
+        queryTemplate = s.queryTemplate
+        tavilyMaxResults = s.tavilyMaxResults
+        tavilySearchDepth = s.tavilySearchDepth
     }
 
-    /// Custom decoder: `ollamaThinkingDisabled` defaults to false so existing JSON files still load.
+    /// Custom decoder: new fields default gracefully so existing JSON (schema v1) still loads.
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(UUID.self, forKey: .id)
@@ -239,6 +248,10 @@ private struct StepRecord: Codable {
         providerRaw = try c.decode(String.self, forKey: .providerRaw)
         modelID = try c.decode(String.self, forKey: .modelID)
         ollamaThinkingDisabled = (try? c.decode(Bool.self, forKey: .ollamaThinkingDisabled)) ?? false
+        stepKindRaw = (try? c.decode(String.self, forKey: .stepKindRaw)) ?? "prompt"
+        queryTemplate = (try? c.decode(String.self, forKey: .queryTemplate)) ?? "{{input}}"
+        tavilyMaxResults = (try? c.decode(Int.self, forKey: .tavilyMaxResults)) ?? 5
+        tavilySearchDepth = (try? c.decode(String.self, forKey: .tavilySearchDepth)) ?? "basic"
     }
 }
 
@@ -253,7 +266,11 @@ private extension Pipeline {
                 provider: LLMProvider(rawValue: s.providerRaw) ?? .anthropic,
                 modelID: s.modelID,
                 sortOrder: s.sortOrder,
-                ollamaThinkingDisabled: s.ollamaThinkingDisabled
+                ollamaThinkingDisabled: s.ollamaThinkingDisabled,
+                stepKind: StepKind(rawValue: s.stepKindRaw) ?? .prompt,
+                queryTemplate: s.queryTemplate,
+                tavilyMaxResults: s.tavilyMaxResults,
+                tavilySearchDepth: s.tavilySearchDepth
             )
         }
         self.init(id: r.id, name: r.name, sortOrder: r.sortOrder, createdAt: r.createdAt, steps: steps)

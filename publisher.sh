@@ -21,6 +21,10 @@ APP_REPO="$GH_USER/yowee"
 TAP_REPO="$GH_USER/homebrew-yowee"
 TAP_REPO_SSH="git@github.com:$TAP_REPO.git"
 CASK_NAME="yowee"
+# GIT_EMAIL must be set to a GitHub-verified public address to satisfy the
+# email-privacy guard on push. Export it before running this script:
+#   export GIT_EMAIL="you@example.com"
+GIT_EMAIL="${GIT_EMAIL:-}"
 
 # ── Summary state ─────────────────────────────────────────────────────────────
 S_PREFLIGHT="skip"; D_PREFLIGHT="skipped"
@@ -76,6 +80,15 @@ mktmpdir() {
 # ── Preflight ─────────────────────────────────────────────────────────────────
 step "Preflight"
 PREFLIGHT_FAIL=0
+
+# Check GIT_EMAIL
+if [[ -n "$GIT_EMAIL" ]]; then
+    echo "  ✓ GIT_EMAIL: $GIT_EMAIL"
+else
+    warn "GIT_EMAIL not set — tap commit will use git global config, which may be a private noreply address"
+    warn "Set it with:  export GIT_EMAIL=\"you@example.com\""
+    PREFLIGHT_FAIL=1
+fi
 
 # Check create-dmg
 if command -v create-dmg &>/dev/null; then
@@ -383,7 +396,9 @@ EOF
             else
                 COMMIT_LOG=$(mktmp)
                 set +e
-                git -C "$TAP_DIR" commit -m "yowee v$VERSION" > "$COMMIT_LOG" 2>&1
+                git -C "$TAP_DIR" \
+                    -c user.email="$GIT_EMAIL" \
+                    commit -m "yowee v$VERSION" > "$COMMIT_LOG" 2>&1
                 COMMIT_EXIT=$?
                 set -e
                 if (( COMMIT_EXIT != 0 )); then

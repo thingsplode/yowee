@@ -37,7 +37,8 @@ public final class OllamaClient: LLMClient {
         if thinkingDisabled { body["think"] = false }
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        osLog.debug("complete: model=\(model, privacy: .public) think=\(self.thinkingDisabled ? "off" : "on", privacy: .public)")
+        let thinkLabel = thinkingDisabled ? "off" : "on"
+        osLog.debug("complete: model=\(model, privacy: .public) think=\(thinkLabel, privacy: .public)")
         let start = Date()
 
         let (data, response): (Data, URLResponse)

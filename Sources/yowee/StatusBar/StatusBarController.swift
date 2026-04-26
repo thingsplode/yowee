@@ -25,7 +25,7 @@ final class StatusBarController: NSObject {
     private var configProxy: MenuItemProxy?
 
     deinit {
-        AppLogger.log("WARNING: StatusBarController deinit — controller was deallocated!", category: "StatusBar")
+        AppLogger.log("StatusBarController deinit — controller was deallocated!", category: "StatusBar", level: .warning)
     }
 
     init(store: PipelineStore, shortcuts: ShortcutStore) {

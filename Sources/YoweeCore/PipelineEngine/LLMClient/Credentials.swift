@@ -8,17 +8,22 @@ public struct Credentials: Sendable {
     public let openAIKey: String
     public let openAIBaseURL: String
     public let ollamaBaseURL: String
+    public let tavilyKey: String
+
+    public static let tavilyKeychainKey = "yowee.api.key.tavily"
 
     public init(
         anthropicKey: String,
         openAIKey: String,
         openAIBaseURL: String = "https://api.openai.com",
-        ollamaBaseURL: String = "http://localhost:11434"
+        ollamaBaseURL: String = "http://localhost:11434",
+        tavilyKey: String = ""
     ) {
         self.anthropicKey = anthropicKey
         self.openAIKey = openAIKey
         self.openAIBaseURL = openAIBaseURL
         self.ollamaBaseURL = ollamaBaseURL
+        self.tavilyKey = tavilyKey
     }
 
     /// Loads live credentials from Keychain and UserDefaults.
@@ -27,7 +32,8 @@ public struct Credentials: Sendable {
             anthropicKey: KeychainStore.load(for: LLMProvider.anthropic.keychainKey) ?? "",
             openAIKey: KeychainStore.load(for: LLMProvider.openai.keychainKey) ?? "",
             openAIBaseURL: UserDefaults.standard.string(forKey: "yowee.openai.baseURL") ?? "https://api.openai.com",
-            ollamaBaseURL: UserDefaults.standard.string(forKey: "yowee.ollama.baseURL") ?? "http://localhost:11434"
+            ollamaBaseURL: UserDefaults.standard.string(forKey: "yowee.ollama.baseURL") ?? "http://localhost:11434",
+            tavilyKey: KeychainStore.load(for: tavilyKeychainKey) ?? ""
         )
     }
 

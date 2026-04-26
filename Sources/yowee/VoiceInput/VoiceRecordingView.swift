@@ -79,7 +79,7 @@ struct VoiceRecordingView: View {
                     .font(.headline)
             }
             WaveformView(level: session.audioLevel)
-            Text("Press ⌥S to stop · Esc to cancel")
+            Text("Press ⌥S to stop · ⌥⎋ to cancel")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }

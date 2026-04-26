@@ -8,7 +8,8 @@ import Foundation
 ///
 /// id=1  text pipeline trigger (⌥Space by default)
 /// id=2  voice start trigger   (⌥R by default)
-/// id=3  voice stop trigger    (⌥S, fixed)
+/// id=3  voice stop trigger    (⌥S by default)
+/// id=4  voice cancel trigger  (⌥⎋ by default)
 @MainActor
 final class GlobalShortcutManager {
     static let shared = GlobalShortcutManager()
@@ -16,6 +17,7 @@ final class GlobalShortcutManager {
     var onTrigger: (() -> Void)? // text pipeline
     var onVoiceStart: (() -> Void)? // voice start
     var onVoiceStop: (() -> Void)? // voice stop
+    var onVoiceCancel: (() -> Void)? // voice cancel
 
     private(set) var currentHotKey: HotKey = .defaultYoweeTrigger
     private var hotKeyRefs: [UInt32: EventHotKeyRef] = [:]
@@ -39,10 +41,11 @@ final class GlobalShortcutManager {
 
     // MARK: - Voice shortcuts
 
-    func registerVoice(start: HotKey, stop: HotKey) {
+    func registerVoice(start: HotKey, stop: HotKey, cancel: HotKey) {
         installEventHandlerIfNeeded()
         registerHotKey(start, id: 2)
         registerHotKey(stop, id: 3)
+        registerHotKey(cancel, id: 4)
     }
 
     func updateVoiceStart(_ hotKey: HotKey) {
@@ -53,6 +56,11 @@ final class GlobalShortcutManager {
     func updateVoiceStop(_ hotKey: HotKey) {
         unregisterHotKey(id: 3)
         registerHotKey(hotKey, id: 3)
+    }
+
+    func updateVoiceCancel(_ hotKey: HotKey) {
+        unregisterHotKey(id: 4)
+        registerHotKey(hotKey, id: 4)
     }
 
     // MARK: - Private
@@ -85,6 +93,7 @@ final class GlobalShortcutManager {
                     case 1: mgr.onTrigger?()
                     case 2: mgr.onVoiceStart?()
                     case 3: mgr.onVoiceStop?()
+                    case 4: mgr.onVoiceCancel?()
                     default: break
                     }
                 }

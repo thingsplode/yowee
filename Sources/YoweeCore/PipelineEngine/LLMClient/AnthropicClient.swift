@@ -22,7 +22,7 @@ public final class AnthropicClient: LLMClient {
         var body: [String: Any] = [
             "model": model,
             "max_tokens": maxTokens,
-            "messages": [["role": "user", "content": user]]
+            "messages": [["role": "user", "content": user]],
         ]
         if let system { body["system"] = system }
         request.httpBody = try JSONSerialization.data(withJSONObject: body)

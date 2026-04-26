@@ -144,10 +144,22 @@ fi
 # ── Assemble .app ─────────────────────────────────────────────────────────────
 if [[ $S_BUILD == "pass" ]]; then
     step "Assemble .app"
+    ICON_SRC="$REPO/Sources/yowee/Assets.xcassets/AppIcon.appiconset/mike.icns"
+    # Assemble into a temp dir then rename atomically so an interrupt can't
+    # leave a half-deleted bundle that silently blocks the next run.
+    APP_TMP="${APP}.tmp"
+    rm -rf "$APP_TMP"
+    mkdir -p "$APP_TMP/Contents/MacOS" "$APP_TMP/Contents/Resources"
+    cp "$BINARY"          "$APP_TMP/Contents/MacOS/yowee"
+    cp "$REPO/Info.plist" "$APP_TMP/Contents/Info.plist"
+    if [[ -f "$ICON_SRC" ]]; then
+        cp "$ICON_SRC" "$APP_TMP/Contents/Resources/mike.icns"
+        echo "  ✓ Copied app icon"
+    else
+        warn "Icon not found at $ICON_SRC — app will have no icon"
+    fi
     rm -rf "$APP"
-    mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-    cp "$BINARY"          "$APP/Contents/MacOS/yowee"
-    cp "$REPO/Info.plist" "$APP/Contents/Info.plist"
+    mv "$APP_TMP" "$APP"
     echo "  ✓ Assembled $APP"
     S_ASSEMBLE="pass"; D_ASSEMBLE="bundle created"
 fi

@@ -8,6 +8,12 @@ Select text → ⌥Space → pick "Improve Grammar" → text is rewritten in pla
 
 No Electron. No browser extension. Works in every app that exposes selected text through the macOS Accessibility API.
 
+Installation:
+```bash
+ brew install --cask thingsplode/yowee/yowee
+```
+```
+```
 ---
 
 ## Requirements
@@ -277,8 +283,19 @@ In **Configure yowee… → Shortcuts**, click the shortcut button and press you
 | Anthropic | console.anthropic.com |
 | OpenAI | platform.openai.com |
 | Ollama | No key needed — runs locally |
+| Tavily | app.tavily.com (required for Research steps) |
 
 For Ollama, the default base URL is `http://localhost:11434`. Change it in Providers settings if you run Ollama on a different host or port.
+
+### Tavily API key (Web Search / Research steps)
+
+Tavily is used by **Research** pipeline steps to search the web and fetch page content. It is only needed if you add a Research step to a pipeline.
+
+1. Go to [app.tavily.com](https://app.tavily.com) and create a free account.
+2. Your API key is displayed on the dashboard — it starts with `tvly-`.
+3. In **Configure yowee… → Providers**, paste the key in the **Tavily (Web Search)** field and click **Save Tavily Key**.
+
+The free tier includes **1 000 searches per month**, which is sufficient for personal use. The key is stored in the macOS Keychain and never written to disk.
 
 ---
 

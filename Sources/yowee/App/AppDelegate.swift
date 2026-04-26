@@ -42,6 +42,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         for provider in LLMProvider.allCases where provider.requiresAPIKey {
             _ = KeychainStore.load(for: provider.keychainKey)
         }
+        _ = KeychainStore.load(for: Credentials.tavilyKeychainKey)
     }
 
     func applicationWillTerminate(_ notification: Notification) {

@@ -8,9 +8,11 @@ struct ShortcutSettingsView: View {
     @State private var yoweeKey: HotKey = .defaultYoweeTrigger
     @State private var voiceKey: HotKey = .defaultVoiceTrigger
     @State private var voiceStopKey: HotKey = .defaultVoiceStopTrigger
+    @State private var voiceCancelKey: HotKey = .defaultVoiceCancelTrigger
     @State private var yoweeRecording = false
     @State private var voiceRecording = false
     @State private var voiceStopRecording = false
+    @State private var voiceCancelRecording = false
 
     var body: some View {
         Form {
@@ -37,22 +39,29 @@ struct ShortcutSettingsView: View {
                     Spacer()
                     ShortcutRecorderButton(hotKey: $voiceKey, isRecording: $voiceRecording)
                 }
-                Button("Reset to ⌥R") {
-                    voiceKey = .defaultVoiceTrigger
-                }
-                .foregroundStyle(.secondary)
+                Button("Reset to ⌥R") { voiceKey = .defaultVoiceTrigger }
+                    .foregroundStyle(.secondary)
                 HStack {
                     Text("Stop Recording")
                     Spacer()
                     ShortcutRecorderButton(hotKey: $voiceStopKey, isRecording: $voiceStopRecording)
                 }
-                Button("Reset to ⌥S") {
-                    voiceStopKey = .defaultVoiceStopTrigger
-                }
-                .foregroundStyle(.secondary)
-                Text("Press the start shortcut to begin recording voice. Press the stop shortcut to finish and begin transcription.")
-                    .font(.caption)
+                Button("Reset to ⌥S") { voiceStopKey = .defaultVoiceStopTrigger }
                     .foregroundStyle(.secondary)
+                HStack {
+                    Text("Cancel Recording")
+                    Spacer()
+                    ShortcutRecorderButton(hotKey: $voiceCancelKey, isRecording: $voiceCancelRecording)
+                }
+                Button("Reset to ⌥⎋") { voiceCancelKey = .defaultVoiceCancelTrigger }
+                    .foregroundStyle(.secondary)
+                Text(
+                    "Start begins recording. Stop finishes and transcribes. Cancel immediately closes the panel and discards the recording."
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            } header: {
+                Label("Voice Input", systemImage: "mic")
             }
         }
         .formStyle(.grouped)
@@ -61,6 +70,7 @@ struct ShortcutSettingsView: View {
             yoweeKey = store.yoweeTrigger
             voiceKey = store.voiceTrigger
             voiceStopKey = store.voiceStopTrigger
+            voiceCancelKey = store.voiceCancelTrigger
         }
         .onChange(of: yoweeKey) { _, newValue in
             store.yoweeTrigger = newValue
@@ -75,7 +85,10 @@ struct ShortcutSettingsView: View {
         .onChange(of: voiceStopKey) { _, newValue in
             store.voiceStopTrigger = newValue
             store.save()
-            // ShortcutStore.save() posts .yoweeShortcutsChanged — VoiceInputCoordinator handles it.
+        }
+        .onChange(of: voiceCancelKey) { _, newValue in
+            store.voiceCancelTrigger = newValue
+            store.save()
         }
     }
 }

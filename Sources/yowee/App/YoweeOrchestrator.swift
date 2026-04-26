@@ -77,7 +77,8 @@ final class YoweeOrchestrator {
         }
         guard let pipeline = pipelines.first(where: { $0.id == selectedID }) else { return }
 
-        let steps = pipeline.sortedSteps.map(StepData.init)
+        let credentials = Credentials.load()
+        let steps = pipeline.sortedSteps.map { StepData(from: $0, credentials: credentials) }
         feedback.showProcessing(near: cursorPoint)
 
         pipelineTask = Task {
