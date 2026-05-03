@@ -4,11 +4,19 @@ public final class OpenAIClient: LLMClient {
     private let apiKey: String
     private let baseURL: String
     private let session: URLSession
+    /// "low", "medium", or "high". Only sent for o-series models; nil = API default.
+    private let reasoningEffort: String?
 
-    public init(apiKey: String, baseURL: String = "https://api.openai.com", session: URLSession = .shared) {
+    public init(
+        apiKey: String,
+        baseURL: String = "https://api.openai.com",
+        session: URLSession = .shared,
+        reasoningEffort: String? = nil
+    ) {
         self.apiKey = apiKey
         self.baseURL = baseURL
         self.session = session
+        self.reasoningEffort = reasoningEffort
     }
 
     public func complete(system: String?, user: String, model: String, maxTokens: Int = 4096) async throws -> String {
@@ -24,7 +32,11 @@ public final class OpenAIClient: LLMClient {
         if let system { messages.append(["role": "system", "content": system]) }
         messages.append(["role": "user", "content": user])
 
-        let body: [String: Any] = ["model": model, "messages": messages, "max_completion_tokens": maxTokens]
+        var body: [String: Any] = ["model": model, "messages": messages, "max_completion_tokens": maxTokens]
+        // reasoning_effort is only supported by o-series models; sending it to others causes a 400.
+        if let effort = reasoningEffort, isReasoningModel(model) {
+            body["reasoning_effort"] = effort
+        }
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, response) = try await session.data(for: request)
@@ -65,6 +77,11 @@ public final class OpenAIClient: LLMClient {
             .map(\.id)
             .filter(isChatModel)
             .sorted()
+    }
+
+    private func isReasoningModel(_ id: String) -> Bool {
+        let prefixes = ["o1", "o2", "o3", "o4", "o5"]
+        return prefixes.contains(where: { id.hasPrefix($0) })
     }
 
     private func isChatModel(_ id: String) -> Bool {

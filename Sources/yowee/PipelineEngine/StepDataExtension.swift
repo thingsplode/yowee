@@ -11,6 +11,7 @@ extension StepData {
             provider: step.provider,
             modelID: step.modelID,
             providerOptions: options,
+            openAIReasoningEffort: step.openAIReasoningEffort,
             queryTemplate: step.queryTemplate,
             tavilyKey: credentials.tavilyKey,
             tavilyMaxResults: step.tavilyMaxResults,

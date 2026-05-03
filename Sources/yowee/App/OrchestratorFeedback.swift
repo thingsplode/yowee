@@ -14,8 +14,12 @@ protocol OrchestratorFeedback: AnyObject {
 @MainActor
 final class DefaultOrchestratorFeedback: OrchestratorFeedback {
     private let hud = LoadingHUD()
+    // Retain the trigger point so errors anchor near where the user initiated the action,
+    // not wherever the cursor drifted during the async pipeline run.
+    private var triggerPoint: NSPoint = .zero
 
     func showProcessing(near point: NSPoint) {
+        triggerPoint = point
         hud.show(near: point)
     }
 
@@ -24,6 +28,7 @@ final class DefaultOrchestratorFeedback: OrchestratorFeedback {
     }
 
     func showError(_ message: String) {
-        ErrorBanner.show(message: message)
+        let point = triggerPoint != .zero ? triggerPoint : NSEvent.mouseLocation
+        ErrorBanner.show(message: message, near: point)
     }
 }

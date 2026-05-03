@@ -177,6 +177,7 @@ if [[ $S_ASSEMBLE == "pass" ]]; then
             --sign "$SIGN_IDENTITY" \
             --timestamp \
             --options runtime \
+            --entitlements "$REPO/yowee.entitlements" \
             "$APP" > "$SIGN_LOG" 2>&1; then
         AUTHORITY=$(codesign -dv "$APP" 2>&1 | grep "Authority=Developer ID" | head -1 || true)
         echo "  ✓ Signed"

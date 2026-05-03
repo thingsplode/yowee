@@ -147,6 +147,28 @@ struct StepEditorView: View {
             .onChange(of: step.ollamaThinkingDisabled) { _, _ in store.save() }
         }
 
+        if step.provider == .openai {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Reasoning effort").font(.caption).foregroundStyle(.secondary)
+                Picker(
+                    "Reasoning effort",
+                    selection: Binding(
+                        get: { step.openAIReasoningEffort ?? "" },
+                        set: { step.openAIReasoningEffort = $0.isEmpty ? nil : $0 }
+                    )
+                ) {
+                    Text("Default").tag("")
+                    Text("Low").tag("low")
+                    Text("Medium").tag("medium")
+                    Text("High").tag("high")
+                }
+                .pickerStyle(.segmented)
+                .onChange(of: step.openAIReasoningEffort) { _, _ in store.save() }
+                Text("Applies to o-series models (o1, o3, o4-mini…). Low = fastest.")
+                    .font(.caption2).foregroundStyle(.secondary)
+            }
+        }
+
         VStack(alignment: .leading, spacing: 4) {
             Text("System Prompt (optional)").font(.caption).foregroundStyle(.secondary)
             TextEditor(text: Binding(

@@ -9,7 +9,11 @@ public enum LLMClientFactory {
         case .anthropic:
             return AnthropicClient(apiKey: credentials.anthropicKey)
         case .openai:
-            return OpenAIClient(apiKey: credentials.openAIKey, baseURL: credentials.openAIBaseURL)
+            return OpenAIClient(
+                apiKey: credentials.openAIKey,
+                baseURL: credentials.openAIBaseURL,
+                reasoningEffort: step.openAIReasoningEffort
+            )
         case .ollama:
             let thinkingDisabled = step.providerOptions["thinkingDisabled"] ?? false
             return OllamaClient(baseURL: credentials.ollamaBaseURL, thinkingDisabled: thinkingDisabled)

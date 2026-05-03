@@ -13,6 +13,7 @@ final class PromptStep: Identifiable {
     var providerRaw: String
     var modelID: String
     var ollamaThinkingDisabled: Bool
+    var openAIReasoningEffort: String?
     // Research step fields
     var queryTemplate: String
     var tavilyMaxResults: Int
@@ -32,6 +33,7 @@ final class PromptStep: Identifiable {
         modelID: String = "claude-sonnet-4-6",
         sortOrder: Int = 0,
         ollamaThinkingDisabled: Bool = false,
+        openAIReasoningEffort: String? = nil,
         stepKind: StepKind = .prompt,
         queryTemplate: String = "{{input}}",
         tavilyMaxResults: Int = 5,
@@ -45,6 +47,7 @@ final class PromptStep: Identifiable {
         self.modelID = modelID
         self.sortOrder = sortOrder
         self.ollamaThinkingDisabled = ollamaThinkingDisabled
+        self.openAIReasoningEffort = openAIReasoningEffort
         self.stepKind = stepKind
         self.queryTemplate = queryTemplate
         self.tavilyMaxResults = tavilyMaxResults

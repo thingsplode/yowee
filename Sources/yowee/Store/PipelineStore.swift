@@ -8,7 +8,7 @@ final class PipelineStore {
     var pipelines: [Pipeline] = []
 
     /// Current storage schema version. Bump when PipelineRecord or StepRecord fields change.
-    static let storageVersion = 2
+    static let storageVersion = 3
 
     private static var configDir: URL {
         URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".config/yowee")
@@ -217,6 +217,7 @@ private struct StepRecord: Codable {
     let providerRaw: String
     let modelID: String
     let ollamaThinkingDisabled: Bool
+    let openAIReasoningEffort: String?
     let stepKindRaw: String
     let queryTemplate: String
     let tavilyMaxResults: Int
@@ -231,6 +232,7 @@ private struct StepRecord: Codable {
         providerRaw = s.providerRaw
         modelID = s.modelID
         ollamaThinkingDisabled = s.ollamaThinkingDisabled
+        openAIReasoningEffort = s.openAIReasoningEffort
         stepKindRaw = s.stepKind.rawValue
         queryTemplate = s.queryTemplate
         tavilyMaxResults = s.tavilyMaxResults
@@ -248,6 +250,7 @@ private struct StepRecord: Codable {
         providerRaw = try c.decode(String.self, forKey: .providerRaw)
         modelID = try c.decode(String.self, forKey: .modelID)
         ollamaThinkingDisabled = (try? c.decode(Bool.self, forKey: .ollamaThinkingDisabled)) ?? false
+        openAIReasoningEffort = try? c.decode(String.self, forKey: .openAIReasoningEffort)
         stepKindRaw = (try? c.decode(String.self, forKey: .stepKindRaw)) ?? "prompt"
         queryTemplate = (try? c.decode(String.self, forKey: .queryTemplate)) ?? "{{input}}"
         tavilyMaxResults = (try? c.decode(Int.self, forKey: .tavilyMaxResults)) ?? 5
@@ -267,6 +270,7 @@ private extension Pipeline {
                 modelID: s.modelID,
                 sortOrder: s.sortOrder,
                 ollamaThinkingDisabled: s.ollamaThinkingDisabled,
+                openAIReasoningEffort: s.openAIReasoningEffort,
                 stepKind: StepKind(rawValue: s.stepKindRaw) ?? .prompt,
                 queryTemplate: s.queryTemplate,
                 tavilyMaxResults: s.tavilyMaxResults,

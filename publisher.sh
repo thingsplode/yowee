@@ -124,16 +124,19 @@ else
     fi
 fi
 
-# Check gh auth (only meaningful if gh is now installed)
+# Check gh auth (only meaningful if gh is now installed).
+# gh auth status exits non-zero if ANY configured account has an invalid token,
+# even when the active account is fine. Use gh api user instead — it tests only
+# the active account with a real API call.
 if command -v gh &>/dev/null; then
     set +e
-    gh auth status &>/dev/null
+    GH_USER_OUT=$(gh api user --jq .login 2>/dev/null)
     GH_AUTH_EXIT=$?
     set -e
-    if (( GH_AUTH_EXIT == 0 )); then
-        echo "  ✓ gh authenticated"
+    if (( GH_AUTH_EXIT == 0 )) && [[ -n "$GH_USER_OUT" ]]; then
+        echo "  ✓ gh authenticated (active account: $GH_USER_OUT)"
     else
-        warn "gh is not authenticated. Run:  gh auth login"
+        warn "gh active account is not authenticated. Run:  gh auth login"
         PREFLIGHT_FAIL=1
     fi
 fi
@@ -291,7 +294,17 @@ if [[ $S_SHA == "pass" ]]; then
 fi
 
 # ── Update tap formula ────────────────────────────────────────────────────────
-if [[ $S_RELEASE == "pass" || $S_RELEASE == "warn" ]]; then
+# Only update the tap when a new DMG was actually uploaded to GitHub.
+# If the release already existed (S_RELEASE=warn), the DMG on GitHub is unchanged
+# so the tap's sha256 is still correct — updating it with the freshly-built local
+# DMG's hash would cause a checksum mismatch on install.
+if [[ $S_RELEASE == "warn" ]]; then
+    step "Update Homebrew tap"
+    warn "Skipping tap update — release $RELEASE_TAG already existed; no new asset was uploaded."
+    warn "The tap formula already has the correct sha256 for the DMG on GitHub."
+    S_TAP="warn"; D_TAP="skipped — release already existed, tap unchanged"
+fi
+if [[ $S_RELEASE == "pass" ]]; then
     step "Update Homebrew tap"
     TAP_DIR=$(mktmpdir)
 

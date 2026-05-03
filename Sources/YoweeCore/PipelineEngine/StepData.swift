@@ -17,6 +17,9 @@ public struct StepData: Sendable {
     /// Provider-specific boolean flags (e.g. ["thinkingDisabled": true] for Ollama).
     /// Using a dictionary avoids changing the struct signature for every new provider option.
     public let providerOptions: [String: Bool]
+    /// OpenAI reasoning effort: "low", "medium", or "high". nil = API default.
+    /// Only sent for o-series models (o1, o3, o4-mini, etc.).
+    public let openAIReasoningEffort: String?
     // Research step fields
     public let queryTemplate: String
     public let tavilyKey: String
@@ -30,6 +33,7 @@ public struct StepData: Sendable {
         provider: LLMProvider = .anthropic,
         modelID: String = "",
         providerOptions: [String: Bool] = [:],
+        openAIReasoningEffort: String? = nil,
         queryTemplate: String = "{{input}}",
         tavilyKey: String = "",
         tavilyMaxResults: Int = 5,
@@ -41,6 +45,7 @@ public struct StepData: Sendable {
         self.provider = provider
         self.modelID = modelID
         self.providerOptions = providerOptions
+        self.openAIReasoningEffort = openAIReasoningEffort
         self.queryTemplate = queryTemplate
         self.tavilyKey = tavilyKey
         self.tavilyMaxResults = tavilyMaxResults

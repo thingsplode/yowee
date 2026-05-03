@@ -109,6 +109,9 @@ struct PipelineEditorView: View {
             .frame(minWidth: 200)
         }
         .navigationTitle("Yowee Configuration")
+        .onChange(of: pipeline.id, initial: true) {
+            selectedStep = pipeline.sortedSteps.first
+        }
     }
 
     private func addStep() {
