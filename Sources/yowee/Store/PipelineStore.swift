@@ -8,7 +8,7 @@ final class PipelineStore {
     var pipelines: [Pipeline] = []
 
     /// Current storage schema version. Bump when PipelineRecord or StepRecord fields change.
-    static let storageVersion = 3
+    nonisolated static let storageVersion = 3
 
     private static var configDir: URL {
         URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".config/yowee")
@@ -85,22 +85,34 @@ final class PipelineStore {
         let fm = FileManager.default
 
         if !fm.fileExists(atPath: dir.path) {
-            try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
-        }
-
-        if fm.fileExists(atPath: file.path),
-           let data = try? Data(contentsOf: file)
-        {
-            let decoder = JSONDecoder()
-            decoder.dateDecodingStrategy = .iso8601
-            if let records = try? decoder.decode([PipelineRecord].self, from: data) {
-                pipelines = records.map(Pipeline.init(record:))
-                    .sorted { $0.sortOrder == $1.sortOrder ? $0.createdAt < $1.createdAt : $0.sortOrder < $1.sortOrder }
-                return
+            do {
+                try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+            } catch {
+                AppLogger.log("failed to create config dir: \(error)", category: "PipelineStore")
             }
         }
 
-        // First launch or unreadable file — seed defaults and write.
+        if fm.fileExists(atPath: file.path) {
+            do {
+                let data = try Data(contentsOf: file)
+                let decoder = JSONDecoder()
+                decoder.dateDecodingStrategy = .iso8601
+                let records = try decoder.decode([PipelineRecord].self, from: data)
+                pipelines = records.map(Pipeline.init(record:))
+                    .sorted { $0.sortOrder == $1.sortOrder ? $0.createdAt < $1.createdAt : $0.sortOrder < $1.sortOrder }
+                AppLogger.log("pipelines loaded from \(file.path)", category: "Orchestrator")
+                return
+            } catch {
+                // File is readable but corrupt — back it up before overwriting with defaults.
+                AppLogger.log("decode failed (\(error)) — backing up corrupt file", category: "PipelineStore")
+                let stamp = backupTimestamp()
+                let backup = file.deletingLastPathComponent()
+                    .appendingPathComponent("pipelines.json.backup-\(stamp)")
+                try? fm.copyItem(at: file, to: backup)
+            }
+        }
+
+        // First launch or corrupt file — seed defaults and persist.
         pipelines = makeDefaultPipelines()
         saveQuietly()
     }
@@ -130,8 +142,18 @@ final class PipelineStore {
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         let records = pipelines.map(PipelineRecord.init(pipeline:))
-        guard let data = try? encoder.encode(records) else { return }
-        try? data.write(to: Self.pipelinesURL, options: .atomic)
+        do {
+            let data = try encoder.encode(records)
+            try data.write(to: Self.pipelinesURL, options: .atomic)
+        } catch {
+            AppLogger.log("save failed: \(error)", category: "PipelineStore")
+        }
+    }
+
+    private func backupTimestamp() -> String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyyMMdd'T'HHmmss"
+        return f.string(from: Date())
     }
 
     private func makeDefaultPipelines() -> [Pipeline] {
@@ -218,6 +240,7 @@ private struct StepRecord: Codable {
     let modelID: String
     let ollamaThinkingDisabled: Bool
     let openAIReasoningEffort: String?
+    let timeoutSeconds: Int
     let stepKindRaw: String
     let queryTemplate: String
     let tavilyMaxResults: Int
@@ -233,6 +256,7 @@ private struct StepRecord: Codable {
         modelID = s.modelID
         ollamaThinkingDisabled = s.ollamaThinkingDisabled
         openAIReasoningEffort = s.openAIReasoningEffort
+        timeoutSeconds = s.timeoutSeconds
         stepKindRaw = s.stepKind.rawValue
         queryTemplate = s.queryTemplate
         tavilyMaxResults = s.tavilyMaxResults
@@ -251,6 +275,7 @@ private struct StepRecord: Codable {
         modelID = try c.decode(String.self, forKey: .modelID)
         ollamaThinkingDisabled = (try? c.decode(Bool.self, forKey: .ollamaThinkingDisabled)) ?? false
         openAIReasoningEffort = try? c.decode(String.self, forKey: .openAIReasoningEffort)
+        timeoutSeconds = (try? c.decode(Int.self, forKey: .timeoutSeconds)) ?? 60
         stepKindRaw = (try? c.decode(String.self, forKey: .stepKindRaw)) ?? "prompt"
         queryTemplate = (try? c.decode(String.self, forKey: .queryTemplate)) ?? "{{input}}"
         tavilyMaxResults = (try? c.decode(Int.self, forKey: .tavilyMaxResults)) ?? 5
@@ -271,6 +296,7 @@ private extension Pipeline {
                 sortOrder: s.sortOrder,
                 ollamaThinkingDisabled: s.ollamaThinkingDisabled,
                 openAIReasoningEffort: s.openAIReasoningEffort,
+                timeoutSeconds: s.timeoutSeconds,
                 stepKind: StepKind(rawValue: s.stepKindRaw) ?? .prompt,
                 queryTemplate: s.queryTemplate,
                 tavilyMaxResults: s.tavilyMaxResults,

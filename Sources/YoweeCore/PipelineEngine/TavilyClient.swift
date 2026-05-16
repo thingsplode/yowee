@@ -30,13 +30,8 @@ public struct TavilyClient: Sendable {
         request.setValue("application/json", forHTTPHeaderField: "content-type")
         request.timeoutInterval = 30
 
-        let body: [String: Any] = [
-            "api_key": apiKey,
-            "query": query,
-            "max_results": maxResults,
-            "search_depth": depth,
-        ]
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let body = TavilyRequest(apiKey: apiKey, query: query, maxResults: maxResults, searchDepth: depth)
+        request.httpBody = try JSONEncoder().encode(body)
 
         let (data, response) = try await session.data(for: request)
 
@@ -48,17 +43,37 @@ public struct TavilyClient: Sendable {
             throw LLMError.apiError(statusCode: http.statusCode, body: body)
         }
 
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let results = json["results"] as? [[String: Any]]
-        else {
+        let decoded: TavilyResponse
+        do {
+            decoded = try JSONDecoder().decode(TavilyResponse.self, from: data)
+        } catch {
             throw LLMError.emptyResponse
         }
-
-        return results.compactMap { result in
-            guard let url = result["url"] as? String else { return nil }
-            let title = result["title"] as? String ?? ""
-            let content = result["content"] as? String ?? ""
-            return TavilyResult(url: url, title: title, content: content)
-        }
+        return decoded.results.map { TavilyResult(url: $0.url, title: $0.title, content: $0.content) }
     }
+}
+
+// MARK: - Codable DTOs
+
+private struct TavilyRequest: Encodable {
+    let apiKey: String
+    let query: String
+    let maxResults: Int
+    let searchDepth: String
+
+    enum CodingKeys: String, CodingKey {
+        case apiKey = "api_key"
+        case query
+        case maxResults = "max_results"
+        case searchDepth = "search_depth"
+    }
+}
+
+private struct TavilyResponse: Decodable {
+    struct Result: Decodable {
+        let url: String
+        let title: String
+        let content: String
+    }
+    let results: [Result]
 }

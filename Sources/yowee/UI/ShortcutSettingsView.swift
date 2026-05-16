@@ -114,6 +114,7 @@ private struct ShortcutRecorderButton: NSViewRepresentable {
         Coordinator(self)
     }
 
+    @MainActor
     final class Coordinator {
         var parent: ShortcutRecorderButton
         init(_ parent: ShortcutRecorderButton) {
@@ -132,7 +133,9 @@ private struct ShortcutRecorderButton: NSViewRepresentable {
 
 final class RecorderNSButton: NSButton {
     fileprivate var coordinator: ShortcutRecorderButton.Coordinator?
-    private var monitor: Any?
+    // nonisolated(unsafe): accessed in deinit (which is nonisolated) to remove the event monitor.
+    // Safe because deinit is always called after all other uses have completed.
+    nonisolated(unsafe) private var monitor: Any?
 
     var hotKey: HotKey = .defaultYoweeTrigger {
         didSet { updateTitle() }
@@ -170,6 +173,11 @@ final class RecorderNSButton: NSButton {
     private func installMonitor() {
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self else { return event }
+            // Escape cancels recording without changing the hotkey.
+            if event.keyCode == 53 { // kVK_Escape
+                stopRecording()
+                return nil
+            }
             let mods = HotKey.carbonModifiers(from: event.modifierFlags)
             guard mods != 0, mods != UInt32(shiftKey) else { return event }
             let newKey = HotKey(keyCode: UInt32(event.keyCode), modifiers: mods)

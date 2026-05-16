@@ -14,8 +14,17 @@ struct StepEditorView: View {
 
     private var pickerModels: [String] {
         var models = fetchedModels.isEmpty ? step.provider.defaultModels : fetchedModels
-        if !models.contains(step.modelID) { models.insert(step.modelID, at: 0) }
+        // Prepend only when the user previously configured a model that is no longer in
+        // the live list (e.g. they uninstalled it). An empty modelID means the fetch
+        // hasn't resolved yet — don't inject a phantom entry.
+        if !step.modelID.isEmpty, !models.contains(step.modelID) {
+            models.insert(step.modelID, at: 0)
+        }
         return models
+    }
+
+    private func isOpenAIReasoningModel(_ id: String) -> Bool {
+        ["o1", "o2", "o3", "o4", "o5"].contains(where: { id.hasPrefix($0) })
     }
 
     var body: some View {
@@ -113,8 +122,11 @@ struct StepEditorView: View {
                     }
                 }
                 .labelsHidden()
-                .onChange(of: step.provider) { _, newProvider in
-                    step.modelID = newProvider.defaultModelID
+                .onChange(of: step.provider) { _, _ in
+                    // Clear modelID so the phantom hardcoded default never appears in the
+                    // picker. fetchModelsIfNeeded() will set it to the first live result
+                    // (or static default on error) once the fetch resolves.
+                    step.modelID = ""
                     store.save()
                 }
             }
@@ -147,7 +159,7 @@ struct StepEditorView: View {
             .onChange(of: step.ollamaThinkingDisabled) { _, _ in store.save() }
         }
 
-        if step.provider == .openai {
+        if step.provider == .openai, isOpenAIReasoningModel(step.modelID) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Reasoning effort").font(.caption).foregroundStyle(.secondary)
                 Picker(
@@ -158,16 +170,25 @@ struct StepEditorView: View {
                     )
                 ) {
                     Text("Default").tag("")
+                    Text("None").tag("none")
                     Text("Low").tag("low")
                     Text("Medium").tag("medium")
                     Text("High").tag("high")
                 }
                 .pickerStyle(.segmented)
                 .onChange(of: step.openAIReasoningEffort) { _, _ in store.save() }
-                Text("Applies to o-series models (o1, o3, o4-mini…). Low = fastest.")
+                Text("None disables reasoning entirely (o4-mini and newer). Low = fastest with reasoning.")
                     .font(.caption2).foregroundStyle(.secondary)
             }
         }
+
+        Stepper(
+            "Timeout: \(step.timeoutSeconds) s",
+            value: $step.timeoutSeconds,
+            in: 15...600,
+            step: 15
+        )
+        .onChange(of: step.timeoutSeconds) { _, _ in store.save() }
 
         VStack(alignment: .leading, spacing: 4) {
             Text("System Prompt (optional)").font(.caption).foregroundStyle(.secondary)
@@ -207,10 +228,22 @@ struct StepEditorView: View {
     private func fetchModelsIfNeeded() async {
         guard step.provider == .openai || step.provider == .ollama else {
             fetchedModels = []
+            // Anthropic has no live fetch; resolve an empty modelID immediately.
+            if step.modelID.isEmpty {
+                step.modelID = step.provider.defaultModelID
+                store.save()
+            }
             return
         }
         isFetchingModels = true
         defer { isFetchingModels = false }
-        fetchedModels = await (try? ModelFetcherService.shared.fetchModels(for: step.provider)) ?? []
+        let models = (try? await ModelFetcherService.shared.fetchModels(for: step.provider)) ?? []
+        fetchedModels = models
+        // Resolve an empty modelID (set on provider switch) to the first live result.
+        // Falls back to the static default when Ollama is unreachable or the key is missing.
+        if step.modelID.isEmpty {
+            step.modelID = models.first ?? step.provider.defaultModelID
+            store.save()
+        }
     }
 }

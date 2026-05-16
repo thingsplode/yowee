@@ -162,7 +162,7 @@ struct PipelineRunnerEdgeCaseTests {
             struct ConditionalFailClient: LLMClient {
                 let shouldFail: Bool
                 func complete(system: String?, user: String, model: String, maxTokens: Int) async throws -> String {
-                    if shouldFail { throw LLMError.timeout }
+                    if shouldFail { throw LLMError.timeout(seconds: 60) }
                     return "ok"
                 }
             }

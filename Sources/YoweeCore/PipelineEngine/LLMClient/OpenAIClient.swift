@@ -6,24 +6,27 @@ public final class OpenAIClient: LLMClient {
     private let session: URLSession
     /// "low", "medium", or "high". Only sent for o-series models; nil = API default.
     private let reasoningEffort: String?
+    private let timeout: TimeInterval
 
     public init(
         apiKey: String,
         baseURL: String = "https://api.openai.com",
         session: URLSession = .shared,
-        reasoningEffort: String? = nil
+        reasoningEffort: String? = nil,
+        timeout: TimeInterval = 60
     ) {
         self.apiKey = apiKey
         self.baseURL = baseURL
         self.session = session
         self.reasoningEffort = reasoningEffort
+        self.timeout = timeout
     }
 
     public func complete(system: String?, user: String, model: String, maxTokens: Int = 4096) async throws -> String {
         guard let url = URL(string: "\(baseURL)/v1/chat/completions") else {
             throw LLMError.invalidURL
         }
-        var request = URLRequest(url: url, timeoutInterval: 30)
+        var request = URLRequest(url: url, timeoutInterval: timeout)
         request.httpMethod = "POST"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "content-type")
@@ -34,12 +37,21 @@ public final class OpenAIClient: LLMClient {
 
         var body: [String: Any] = ["model": model, "messages": messages, "max_completion_tokens": maxTokens]
         // reasoning_effort is only supported by o-series models; sending it to others causes a 400.
+        // "none" disables reasoning entirely on models that support it (e.g. o4-mini).
         if let effort = reasoningEffort, isReasoningModel(model) {
             body["reasoning_effort"] = effort
         }
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await session.data(for: request)
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch let urlError as URLError {
+            if urlError.code == .timedOut {
+                throw LLMError.timeout(seconds: Int(timeout))
+            }
+            throw LLMError.apiError(statusCode: 0, body: urlError.localizedDescription)
+        }
         guard let http = response as? HTTPURLResponse else {
             throw LLMError.apiError(statusCode: -1, body: "")
         }
@@ -49,6 +61,8 @@ public final class OpenAIClient: LLMClient {
         }
 
         let decoded = try JSONDecoder().decode(OpenAIResponse.self, from: data)
+        // content is String? — reasoning models can return null when they produce only
+        // reasoning tokens with no visible output (e.g. reasoning_effort: "none" edge cases).
         guard let text = decoded.choices.first?.message.content, !text.isEmpty else {
             throw LLMError.emptyResponse
         }
@@ -99,7 +113,7 @@ private struct OpenAIModelsResponse: Decodable {
 
 private struct OpenAIResponse: Decodable {
     struct Choice: Decodable {
-        struct Message: Decodable { let content: String }
+        struct Message: Decodable { let content: String? }
         let message: Message
     }
 

@@ -69,10 +69,16 @@ final class VoiceRecordingPanel {
         hostingView = hosting
 
         // Local monitor intercepts key events in our app before they reach any window.
-        // NSEvent monitors always fire on the main thread; MainActor.assumeIsolated is safe.
+        // NSEvent monitors always fire on the main thread; assumeIsolated is safe.
+        // nonisolated(unsafe) suppresses the spurious Sendable warnings for NSEvent
+        // (non-Sendable AppKit type) crossing the assumeIsolated boundary — all execution
+        // is on the main thread, so no actual data race is possible.
         eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self else { return event }
-            return MainActor.assumeIsolated { self.handleKeyEvent(event) }
+            nonisolated(unsafe) let e = event
+            nonisolated(unsafe) var result: NSEvent? = event
+            MainActor.assumeIsolated { result = self.handleKeyEvent(e) }
+            return result
         }
     }
 

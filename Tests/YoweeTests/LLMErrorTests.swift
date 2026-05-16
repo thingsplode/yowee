@@ -55,7 +55,7 @@ struct LLMErrorTests {
     }
 
     @Test func timeoutHasDescription() {
-        let desc = LLMError.timeout.errorDescription ?? ""
+        let desc = LLMError.timeout(seconds: 60).errorDescription ?? ""
         #expect(!desc.isEmpty)
         #expect(desc.lowercased().contains("timeout") || desc.lowercased().contains("timed"))
     }
@@ -69,7 +69,7 @@ struct LLMErrorTests {
             .apiError(statusCode: 500, body: "err"),
             .emptyResponse,
             .invalidURL,
-            .timeout,
+            .timeout(seconds: 60),
         ]
         for error in errors {
             #expect(error.errorDescription != nil, "\(error) should have a description")

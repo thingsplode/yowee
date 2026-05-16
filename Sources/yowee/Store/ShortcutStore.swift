@@ -16,8 +16,10 @@ final class ShortcutStore {
     }
 
     func load() {
+        let fm = FileManager.default
+
         // Migrate from legacy UserDefaults if shortcuts.json doesn't exist yet.
-        if !FileManager.default.fileExists(atPath: Self.shortcutsURL.path) {
+        if !fm.fileExists(atPath: Self.shortcutsURL.path) {
             let legacy = HotKey.loadLegacy()
             if let saved = legacy { yoweeTrigger = saved }
             voiceTrigger = .defaultVoiceTrigger
@@ -25,14 +27,23 @@ final class ShortcutStore {
             return
         }
 
-        guard let data = try? Data(contentsOf: Self.shortcutsURL),
-              let record = try? JSONDecoder().decode(ShortcutRecord.self, from: data)
-        else { return }
-
-        yoweeTrigger = record.yoweeTrigger
-        voiceTrigger = record.voiceTrigger
-        voiceStopTrigger = record.voiceStopTrigger
-        voiceCancelTrigger = record.voiceCancelTrigger
+        do {
+            let data = try Data(contentsOf: Self.shortcutsURL)
+            let record = try JSONDecoder().decode(ShortcutRecord.self, from: data)
+            yoweeTrigger = record.yoweeTrigger
+            voiceTrigger = record.voiceTrigger
+            voiceStopTrigger = record.voiceStopTrigger
+            voiceCancelTrigger = record.voiceCancelTrigger
+        } catch {
+            // Corrupt file — back it up, then persist current defaults so next launch is clean.
+            AppLogger.log("shortcuts load failed (\(error)) — backing up corrupt file", category: "ShortcutStore")
+            let stamp = backupTimestamp()
+            let backup = Self.shortcutsURL.deletingLastPathComponent()
+                .appendingPathComponent("shortcuts.json.backup-\(stamp)")
+            try? fm.copyItem(at: Self.shortcutsURL, to: backup)
+            // Property initializers already set sensible defaults; just persist them.
+            save()
+        }
     }
 
     func save() {
@@ -44,9 +55,19 @@ final class ShortcutStore {
         )
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        guard let data = try? encoder.encode(record) else { return }
-        try? data.write(to: Self.shortcutsURL, options: .atomic)
+        do {
+            let data = try encoder.encode(record)
+            try data.write(to: Self.shortcutsURL, options: .atomic)
+        } catch {
+            AppLogger.log("shortcuts save failed: \(error)", category: "ShortcutStore")
+        }
         NotificationCenter.default.post(name: .yoweeShortcutsChanged, object: nil)
+    }
+
+    private func backupTimestamp() -> String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyyMMdd'T'HHmmss"
+        return f.string(from: Date())
     }
 }
 

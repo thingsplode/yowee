@@ -108,7 +108,8 @@ struct VoiceRecordingView: View {
                 Text("Process")
                     .frame(maxWidth: .infinity)
             }
-            .keyboardShortcut(.return, modifiers: [])
+            // Return is handled exclusively by VoiceRecordingPanel's NSEvent monitor
+            // to avoid double-firing confirmSelection() when both handlers fire.
             .buttonStyle(.borderedProminent)
         }
         .onAppear { pickerFocused = true }

@@ -19,7 +19,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
 
         store.load()
-        AppLogger.log("pipelines loaded from \(PipelineStore.pipelinesURL.path)", category: "Orchestrator")
 
         shortcuts.load()
         AppLogger.log(
@@ -39,15 +38,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func warmUpKeychain() {
-        for provider in LLMProvider.allCases where provider.requiresAPIKey {
-            _ = KeychainStore.load(for: provider.keychainKey)
+        // Run on a background task so the security daemon round-trip doesn't stall launch.
+        Task.detached(priority: .background) {
+            for provider in LLMProvider.allCases where provider.requiresAPIKey {
+                _ = KeychainStore.load(for: provider.keychainKey)
+            }
+            _ = KeychainStore.load(for: Credentials.tavilyKeychainKey)
         }
-        _ = KeychainStore.load(for: Credentials.tavilyKeychainKey)
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         store.save()
         shortcuts.save()
+        AppLogger.close()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

@@ -3,17 +3,19 @@ import Foundation
 public final class AnthropicClient: LLMClient {
     private let apiKey: String
     private let session: URLSession
+    private let timeout: TimeInterval
 
-    public init(apiKey: String, session: URLSession = .shared) {
+    public init(apiKey: String, session: URLSession = .shared, timeout: TimeInterval = 60) {
         self.apiKey = apiKey
         self.session = session
+        self.timeout = timeout
     }
 
     public func complete(system: String?, user: String, model: String, maxTokens: Int = 4096) async throws -> String {
         guard let url = URL(string: "https://api.anthropic.com/v1/messages") else {
             throw LLMError.invalidURL
         }
-        var request = URLRequest(url: url, timeoutInterval: 30)
+        var request = URLRequest(url: url, timeoutInterval: timeout)
         request.httpMethod = "POST"
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
@@ -27,7 +29,15 @@ public final class AnthropicClient: LLMClient {
         if let system { body["system"] = system }
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await session.data(for: request)
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch let urlError as URLError {
+            if urlError.code == .timedOut {
+                throw LLMError.timeout(seconds: Int(timeout))
+            }
+            throw LLMError.apiError(statusCode: 0, body: urlError.localizedDescription)
+        }
         guard let http = response as? HTTPURLResponse else {
             throw LLMError.apiError(statusCode: -1, body: "")
         }

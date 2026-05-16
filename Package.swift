@@ -29,7 +29,10 @@ let package = Package(
                 "YoweeCore",
                 .product(name: "WhisperKit", package: "WhisperKit"),
             ],
-            path: "Sources/yowee"
+            path: "Sources/yowee",
+            swiftSettings: [
+                .enableUpcomingFeature("StrictConcurrency"),
+            ]
         ),
         // Standalone test runner: `swift run TestRunner` — works without Xcode's swiftpm_testing_helper.
         // Sources symlink to Tests/YoweeTests/ so the same files serve both this target and Xcode.

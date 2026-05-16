@@ -47,7 +47,15 @@ enum TextReplacer {
                 log("AX write verified (selection changed)")
                 return
             }
-            // Same text as before write → app accepted the call but did nothing (e.g. Notes).
+            // textAfter == textBefore. Two possible explanations:
+            // (a) App silently ignored the write (e.g. Notes) — would have changed the text.
+            // (b) Replacement is identical to the original — no visible change expected, but
+            //     the write did land (selection collapsed or app treated it as a no-op).
+            // Only fall back to Cmd+V for case (a).
+            if text == textBefore {
+                log("AX write: replacement identical to original — treating as success")
+                return
+            }
             log("AX write silently ignored — using Cmd+V")
         } else {
             log("AX write failed — using Cmd+V")

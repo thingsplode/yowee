@@ -9,23 +9,25 @@ public final class OllamaClient: LLMClient {
     /// When true, passes "think": false in the request body — disables chain-of-thought
     /// on models that support it (e.g. deepseek-r1, qwq). Has no effect on other models.
     private let thinkingDisabled: Bool
+    private let timeout: TimeInterval
 
     public init(
         baseURL: String = "http://localhost:11434",
         session: URLSession = .shared,
-        thinkingDisabled: Bool = false
+        thinkingDisabled: Bool = false,
+        timeout: TimeInterval = 120
     ) {
         self.baseURL = baseURL
         self.session = session
         self.thinkingDisabled = thinkingDisabled
+        self.timeout = timeout
     }
 
     public func complete(system: String?, user: String, model: String, maxTokens: Int = 4096) async throws -> String {
         guard let url = URL(string: "\(baseURL)/api/chat") else {
             throw LLMError.invalidURL
         }
-        // 120s: Ollama must load the model into memory on first use, which can take 30–60s
-        var request = URLRequest(url: url, timeoutInterval: 120)
+        var request = URLRequest(url: url, timeoutInterval: timeout)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "content-type")
 

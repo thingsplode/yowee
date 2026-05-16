@@ -7,16 +7,20 @@ public enum LLMClientFactory {
     public static func client(for step: StepData, credentials: Credentials) -> any LLMClient {
         switch step.provider {
         case .anthropic:
-            return AnthropicClient(apiKey: credentials.anthropicKey)
+            return AnthropicClient(apiKey: credentials.anthropicKey, timeout: TimeInterval(step.timeoutSeconds))
         case .openai:
             return OpenAIClient(
                 apiKey: credentials.openAIKey,
                 baseURL: credentials.openAIBaseURL,
-                reasoningEffort: step.openAIReasoningEffort
+                reasoningEffort: step.openAIReasoningEffort,
+                timeout: TimeInterval(step.timeoutSeconds)
             )
         case .ollama:
-            let thinkingDisabled = step.providerOptions["thinkingDisabled"] ?? false
-            return OllamaClient(baseURL: credentials.ollamaBaseURL, thinkingDisabled: thinkingDisabled)
+            return OllamaClient(
+                baseURL: credentials.ollamaBaseURL,
+                thinkingDisabled: step.ollamaThinkingDisabled,
+                timeout: TimeInterval(step.timeoutSeconds)
+            )
         }
     }
 }

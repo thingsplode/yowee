@@ -40,11 +40,9 @@ final class YoweeOrchestrator {
         log("handleTrigger fired")
 
         guard AccessibilityPermissionGuard.isTrusted else {
-            log("FAIL: not trusted")
-            feedback
-                .showError(
-                    "yowee needs Accessibility permission. Open Configure yowee… or check System Settings → Privacy & Security → Accessibility."
-                )
+            let msg = "yowee needs Accessibility permission. Go to System Settings → Privacy & Security → Accessibility, find yowee, and toggle it on (or off then on again if already listed)."
+            log("FAIL: not trusted — \(msg)")
+            feedback.showError(msg)
             return
         }
         log("accessibility trusted")
@@ -52,6 +50,8 @@ final class YoweeOrchestrator {
         let originalApp = NSWorkspace.shared.frontmostApplication
         log("original app: \(originalApp?.localizedName ?? "unknown")")
 
+        // Read selected text synchronously before starting the task — the AX selection
+        // window is very short in some apps (e.g. Slack) and an extra run-loop hop loses it.
         guard let (text, element, selectionRange) = AccessibilityReader.selectedText() else {
             log("FAIL: no selected text")
             feedback.showError("No text selected — select some text first.")
@@ -88,21 +88,17 @@ final class YoweeOrchestrator {
             do {
                 let result = try await runner.run(steps: steps, input: text)
                 log("pipeline result: \(result.prefix(80))…")
-                await MainActor.run {
-                    feedback.hideProcessing()
-                    originalApp?.activate(options: [.activateIgnoringOtherApps])
-                }
+                // Task body already runs on @MainActor (inherited from enclosing scope).
+                // MainActor.run {} hops are redundant — call directly.
+                feedback.hideProcessing()
+                originalApp?.activate(options: [.activateIgnoringOtherApps])
                 try? await Task.sleep(nanoseconds: 300_000_000)
-                await MainActor.run {
-                    TextReplacer.replace(in: element, range: selectionRange, with: result)
-                    log("replace done")
-                }
+                TextReplacer.replace(in: element, range: selectionRange, with: result)
+                log("replace done")
             } catch {
-                await MainActor.run {
-                    feedback.hideProcessing()
-                    feedback.showError(error.localizedDescription)
-                    log("pipeline error: \(error)")
-                }
+                feedback.hideProcessing()
+                feedback.showError(error.localizedDescription)
+                log("pipeline error: \(error)")
             }
         }
     }

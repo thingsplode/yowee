@@ -4,8 +4,6 @@ struct LogView: View {
     @State private var lines: [LogLine] = []
     @State private var autoScroll = true
 
-    private let logURL = URL(fileURLWithPath: "/tmp/yowee_debug.log")
-
     var body: some View {
         VStack(spacing: 0) {
             ScrollViewReader { proxy in
@@ -32,9 +30,7 @@ struct LogView: View {
                     Color.clear.frame(height: 1).id("logBottom")
                 }
                 .onChange(of: lines.count) { _, _ in
-                    if autoScroll {
-                        proxy.scrollTo("logBottom", anchor: .bottom)
-                    }
+                    if autoScroll { proxy.scrollTo("logBottom", anchor: .bottom) }
                 }
             }
 
@@ -42,34 +38,36 @@ struct LogView: View {
 
             HStack {
                 Toggle("Auto-scroll", isOn: $autoScroll)
-                    .toggleStyle(.checkbox)
-                    .font(.caption)
+                    .toggleStyle(.checkbox).font(.caption)
                 Text("· refreshes every 1.5s")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                    .font(.caption2).foregroundStyle(.tertiary)
                 Spacer()
                 Button("Clear") {
-                    try? "".write(to: logURL, atomically: true, encoding: .utf8)
+                    try? "".write(to: AppLogger.logFileURL, atomically: true, encoding: .utf8)
                     lines = []
                 }
                 .buttonStyle(.borderless)
-                Button("Refresh") { reload() }
+                Button("Refresh") { Task { await reload() } }
                     .buttonStyle(.borderless)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
         }
         .task {
-            reload()
+            await reload()
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(1.5))
-                reload()
+                await reload()
             }
         }
     }
 
-    private func reload() {
-        let raw = (try? String(contentsOf: logURL, encoding: .utf8)) ?? ""
+    // File I/O runs on the cooperative thread pool, not the main actor.
+    private func reload() async {
+        let url = AppLogger.logFileURL
+        let raw = await Task.detached(priority: .utility) {
+            (try? String(contentsOf: url, encoding: .utf8)) ?? ""
+        }.value
         let parsed = raw
             .components(separatedBy: "\n")
             .filter { !$0.isEmpty }

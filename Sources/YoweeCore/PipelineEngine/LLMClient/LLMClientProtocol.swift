@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol LLMClient {
+public protocol LLMClient: Sendable {
     func complete(system: String?, user: String, model: String, maxTokens: Int) async throws -> String
 }
 
@@ -8,7 +8,7 @@ public enum LLMError: Error, LocalizedError {
     case apiError(statusCode: Int, body: String)
     case emptyResponse
     case invalidURL
-    case timeout
+    case timeout(seconds: Int)
 
     public var errorDescription: String? {
         switch self {
@@ -20,7 +20,7 @@ public enum LLMError: Error, LocalizedError {
             "API error \(code): \(body.prefix(120))"
         case .emptyResponse: "The model returned an empty response"
         case .invalidURL: "Invalid API endpoint URL"
-        case .timeout: "Request timed out after 30 seconds"
+        case let .timeout(seconds): "Request timed out after \(seconds) seconds"
         }
     }
 
