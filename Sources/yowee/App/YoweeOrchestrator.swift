@@ -78,7 +78,8 @@ final class YoweeOrchestrator {
         guard let pipeline = pipelines.first(where: { $0.id == selectedID }) else { return }
 
         let credentials = Credentials.load()
-        let steps = pipeline.sortedSteps.map { StepData(from: $0, credentials: credentials) }
+        let contextContent = loadContextFile(for: pipeline)
+        let steps = pipeline.sortedSteps.map { StepData(from: $0, contextContent: contextContent, credentials: credentials) }
         feedback.showProcessing(near: cursorPoint)
 
         pipelineTask = Task {
@@ -104,6 +105,21 @@ final class YoweeOrchestrator {
     }
 
     // MARK: - Logging
+
+    /// Reads the pipeline's context file and returns its content, or nil if none is set
+    /// or the file cannot be read. Errors are logged but never surfaced to the user —
+    /// a missing context file degrades gracefully to an empty {{context}} substitution.
+    private func loadContextFile(for pipeline: Pipeline) -> String? {
+        guard let path = pipeline.contextFilePath, !path.isEmpty else { return nil }
+        do {
+            let content = try String(contentsOfFile: path, encoding: .utf8)
+            log("context file loaded: \(path) (\(content.count) chars)")
+            return content
+        } catch {
+            log("context file unreadable (\(path)): \(error.localizedDescription)")
+            return nil
+        }
+    }
 
     private func log(_ msg: String) {
         AppLogger.log(msg, category: "Orchestrator")

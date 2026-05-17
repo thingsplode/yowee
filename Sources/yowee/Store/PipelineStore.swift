@@ -207,6 +207,7 @@ private struct PipelineRecord: Codable {
     let name: String
     let sortOrder: Int
     let createdAt: Date
+    let contextFilePath: String?
     let steps: [StepRecord]
 
     init(pipeline p: Pipeline) {
@@ -215,6 +216,7 @@ private struct PipelineRecord: Codable {
         name = p.name
         sortOrder = p.sortOrder
         createdAt = p.createdAt
+        contextFilePath = p.contextFilePath
         steps = p.steps.map(StepRecord.init(step:))
     }
 
@@ -226,6 +228,7 @@ private struct PipelineRecord: Codable {
         name = try c.decode(String.self, forKey: .name)
         sortOrder = try c.decode(Int.self, forKey: .sortOrder)
         createdAt = try c.decode(Date.self, forKey: .createdAt)
+        contextFilePath = try? c.decode(String.self, forKey: .contextFilePath)
         steps = try c.decode([StepRecord].self, forKey: .steps)
     }
 }
@@ -303,6 +306,6 @@ private extension Pipeline {
                 tavilySearchDepth: s.tavilySearchDepth
             )
         }
-        self.init(id: r.id, name: r.name, sortOrder: r.sortOrder, createdAt: r.createdAt, steps: steps)
+        self.init(id: r.id, name: r.name, sortOrder: r.sortOrder, createdAt: r.createdAt, steps: steps, contextFilePath: r.contextFilePath)
     }
 }

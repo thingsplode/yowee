@@ -256,7 +256,11 @@ final class VoiceInputCoordinator: NSObject {
         panel.reflow()
 
         let credentials = Credentials.load()
-        let steps = pipeline.sortedSteps.map { StepData(from: $0, credentials: credentials) }
+        let contextContent: String? = {
+            guard let path = pipeline.contextFilePath, !path.isEmpty else { return nil }
+            return try? String(contentsOfFile: path, encoding: .utf8)
+        }()
+        let steps = pipeline.sortedSteps.map { StepData(from: $0, contextContent: contextContent, credentials: credentials) }
         pipelineTask = Task {
             do {
                 let result = try await runner.run(steps: steps, input: input)

@@ -41,7 +41,7 @@ public actor PipelineRunner {
         for step in steps {
             switch step.stepKind {
             case .prompt:
-                let rendered = try PromptRenderer.render(template: step.userTemplate, input: current)
+                let rendered = try PromptRenderer.render(template: step.userTemplate, input: current, context: step.contextContent)
                 let client = clientFactory(step)
                 let label = "\(step.provider.rawValue)/\(step.modelID)"
                 log("step '\(label)' starting")

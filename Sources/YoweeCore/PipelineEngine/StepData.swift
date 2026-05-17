@@ -16,6 +16,9 @@ public struct StepData: Sendable {
     public let modelID: String
     /// When true, passes think:false to Ollama — disables chain-of-thought on models that support it.
     public let ollamaThinkingDisabled: Bool
+    /// Pre-loaded content of the pipeline's context file, injected as {{context}} in templates.
+    /// nil when no context file is configured or the file could not be read.
+    public let contextContent: String?
     /// OpenAI reasoning effort: "low", "medium", "high", or "none". nil = API default.
     /// Only sent for o-series models (o1, o3, o4-mini, etc.).
     public let openAIReasoningEffort: String?
@@ -34,6 +37,7 @@ public struct StepData: Sendable {
         provider: LLMProvider = .anthropic,
         modelID: String = "",
         ollamaThinkingDisabled: Bool = false,
+        contextContent: String? = nil,
         openAIReasoningEffort: String? = nil,
         timeoutSeconds: Int = 60,
         queryTemplate: String = "{{input}}",
@@ -47,6 +51,7 @@ public struct StepData: Sendable {
         self.provider = provider
         self.modelID = modelID
         self.ollamaThinkingDisabled = ollamaThinkingDisabled
+        self.contextContent = contextContent
         self.openAIReasoningEffort = openAIReasoningEffort
         self.timeoutSeconds = timeoutSeconds
         self.queryTemplate = queryTemplate
